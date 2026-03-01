@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Al.shamil Elite | Ultra Security</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        :root { --p-blue: #2563eb; --p-cyan: #00d2ff; --p-purple: #7c3aed; }
+        body { font-family: 'Tajawal', sans-serif; background: #000; color: white; margin: 0; overflow-x: hidden; user-select: none; }
+        .grad-text { background: linear-gradient(to right, var(--p-cyan), var(--p-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass { background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .input-grad { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 15px; padding: 15px; width: 100%; color: white; outline: none; transition: 0.3s; font-size: 12px; }
+        .input-grad:focus { border-color: var(--p-cyan); box-shadow: 0 0 10px rgba(0, 210, 255, 0.2); }
+        
+        /* الحلقة المتدرجة الدوارة */
+        .timer-ring { width: 150px; height: 150px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; background: #000; z-index: 10; }
+        .timer-glow { 
+            position: absolute; inset: -4px; border-radius: 50%; 
+            background: conic-gradient(from 0deg, var(--p-cyan), var(--p-purple), var(--p-blue), var(--p-cyan));
+            animation: rotateGlow 2.5s linear infinite;
+            mask: radial-gradient(closest-side, transparent 92%, black 100%);
+            -webkit-mask: radial-gradient(closest-side, transparent 92%, black 100%);
+        }
+        @keyframes rotateGlow { 100% { transform: rotate(360deg); } }
+
+        .ticker-wrap { background: linear-gradient(90deg, #1e3a8a, #581c87); padding: 8px 0; overflow: hidden; white-space: nowrap; }
+        .ticker-move { display: inline-block; animation: ticker-reverse 25s linear infinite; font-size: 0.7rem; font-weight: bold; }
+        @keyframes ticker-reverse { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+        .hidden { display: none !important; }
+        .nav-btn.active { color: var(--p-cyan); transform: scale(1.1); }
+        
+        #slider { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; position: relative; border: 1px solid #222; }
+        .slide { position: absolute; inset: 0; opacity: 0; transition: 1.5s ease-in-out; background-size: cover; background-position: center; }
+        .slide.active { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div id="securityCheck" class="fixed inset-0 bg-black z-[1000] flex items-center justify-center flex-col text-center p-6">
+        <h1 class="text-2xl font-bold grad-text mb-4 animate__animated animate__pulse animate__infinite">Al.shamil Elite</h1>
+        <p class="text-xs text-gray-500">جاري تأمين المحفظة ومزامنة بيانات الفريق...</p>
+    </div>
+
+    <div id="authPage" class="hidden min-h-screen flex items-center justify-center p-6 bg-[#050505]">
+        <div class="glass p-8 rounded-[3rem] w-full max-w-md text-center shadow-2xl border-white/10">
+            <h1 class="text-4xl font-bold italic grad-text mb-10">Al.shamil</h1>
+            <div id="loginForm" class="space-y-4">
+                <input type="text" id="logId" placeholder="اسم المستخدم أو الهاتف" class="input-grad">
+                <input type="password" id="logPass" placeholder="كلمة المرور" class="input-grad">
+                <button onclick="login()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold text-sm shadow-xl active:scale-95 transition">دخول آمن</button>
+                <p class="text-[10px] text-gray-500 mt-6">مستخدم جديد؟ <span onclick="toggleAuth(true)" class="text-blue-500 cursor-pointer underline">إنشاء حساب</span></p>
+            </div>
+            <div id="regForm" class="hidden space-y-3 text-right">
+                <div class="relative w-16 h-16 mx-auto mb-2">
+                    <img id="regPreview" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="w-full h-full rounded-full object-cover border-2 border-white/20">
+                    <label class="absolute bottom-0 right-0 bg-white p-1 rounded-full cursor-pointer"><span class="text-[8px]">📷</span><input type="file" id="regFile" class="hidden" onchange="previewImg(this, 'regPreview')"></label>
+                </div>
+                <input type="text" id="regUser" placeholder="اسم المستخدم" class="input-grad">
+                <input type="email" id="regEmail" placeholder="البريد الإلكتروني" class="input-grad">
+                <input type="tel" id="regPhone" placeholder="رقم الهاتف" class="input-grad">
+                <input type="password" id="regPass" placeholder="كلمة المرور" class="input-grad">
+                <input type="text" id="regRef" placeholder="رمز الإحالة (8 أرقام)" class="input-grad border-yellow-500/20">
+                <button onclick="register()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold text-sm">تأكيد الحساب</button>
+                <p class="text-[10px] text-gray-500 mt-4 text-center" onclick="toggleAuth(false)">لديك حساب؟ سجل دخول</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainPage" class="hidden min-h-screen pb-20">
+        <header class="flex justify-between items-center p-4 glass sticky top-0 z-[100]">
+            <span class="text-xl" onclick="openModal('support')">🎧</span>
+            <div class="flex items-center gap-3" onclick="openModal('profile')">
+                <img id="topImg" src="" class="w-8 h-8 rounded-full border border-white/20 object-cover">
+                <span class="text-xl">☰</span>
+            </div>
+        </header>
+
+        <main id="homeContent" class="p-5 space-y-6">
+            <div class="ticker-wrap rounded-2xl">
+                <div class="ticker-move">💎 مكافأة الإحالة: $5 لأول 10 أشخاص و$1 لما بعد ذلك | كود إحالتك الفريد يتكون من 8 أرقام عشوائية 💎</div>
+            </div>
+
+            <div class="glass p-6 rounded-[2.5rem] space-y-4 border-blue-500/20 shadow-2xl">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 id="uNameDisp" class="text-sm font-bold grad-text">...</h2>
+                        <p id="uVipDisp" class="text-[8px] text-gray-500 italic mt-1">جاري التحقق...</p>
+                    </div>
+                    <div class="text-left">
+                        <p class="text-[9px] text-gray-500">الرصيد الكلي</p>
+                        <h3 id="uBalDisp" class="text-2xl font-bold tabular-nums">$0.00</h3>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 text-center border-t border-white/5 pt-4">
+                    <div>
+                        <p class="text-[8px] text-gray-500 uppercase">الربح اليومي</p>
+                        <p id="uProfitDisp" class="text-xs font-bold text-green-400">$0.00</p>
+                    </div>
+                    <div class="cursor-pointer" onclick="openModal('subDetails')">
+                        <p class="text-[8px] text-gray-500 uppercase">الاشتراكات</p>
+                        <p id="uCountDisp" class="text-xs font-bold text-blue-400">0</p>
+                    </div>
+                </div>
+                <div class="bg-white/5 p-3 rounded-2xl flex justify-between items-center border border-white/5">
+                    <div>
+                        <p class="text-[7px] text-gray-400">رمز الإحالة الخاص بك:</p>
+                        <p id="uRefCode" class="text-xs font-bold text-yellow-500 tracking-widest">00000000</p>
+                    </div>
+                    <button onclick="copyRef()" class="bg-yellow-500/10 text-yellow-500 px-4 py-2 rounded-xl text-[8px] font-bold border border-yellow-500/20 active:scale-90 transition">نسخ</button>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center py-2">
+                <div class="timer-ring">
+                    <div class="timer-glow" id="glowRing"></div>
+                    <div id="timerVal" class="text-xl font-bold tabular-nums">00:00:00</div>
+                </div>
+            </div>
+
+            <div id="slider"></div>
+
+            <h3 class="text-[10px] font-bold border-r-4 border-blue-600 pr-2">الباقات المتاحة</h3>
+            <div id="vipGrid" class="grid grid-cols-2 gap-4"></div>
+        </main>
+
+        <main id="walletContent" class="hidden p-5 space-y-6">
+            <h2 class="text-center font-bold grad-text text-lg">مركز المحفظة</h2>
+            <div class="flex gap-4">
+                <button onclick="openWalletModal('deposit')" class="flex-1 bg-blue-600 py-4 rounded-2xl font-bold text-xs shadow-xl active:scale-95 transition">إيداع</button>
+                <button onclick="openWalletModal('withdraw')" class="flex-1 bg-zinc-900 py-4 rounded-2xl font-bold text-xs border border-white/5 active:scale-95 transition">سحب</button>
+            </div>
+            <div class="glass p-5 rounded-3xl">
+                <h4 class="text-[10px] font-bold mb-4">📈 سجل العمليات</h4>
+                <div id="logList" class="space-y-3 max-h-[350px] overflow-y-auto pr-1"></div>
+            </div>
+        </main>
+
+        <nav class="fixed bottom-0 inset-x-0 glass flex justify-around p-4 rounded-t-[2.5rem] border-t border-white/5 z-[100]">
+            <button onclick="switchTab('home')" id="homeBtn" class="nav-btn active flex flex-col items-center gap-1">
+                <span class="text-xl">🏠</span><span class="text-[8px] font-bold">الرئيسية</span>
+            </button>
+            <button onclick="openModal('team')" id="teamBtn" class="nav-btn flex flex-col items-center gap-1">
+                <span class="text-xl">👥</span><span class="text-[8px] font-bold">الفريق</span>
+            </button>
+            <button onclick="switchTab('wallet')" id="walletBtn" class="nav-btn flex flex-col items-center gap-1">
+                <span class="text-xl">💳</span><span class="text-[8px] font-bold">المحفظة</span>
+            </button>
+        </nav>
+    </div>
+
+    <div id="modal" class="hidden fixed inset-0 bg-black/98 z-[500] flex items-center justify-center p-4">
+        <div class="glass p-8 rounded-[3rem] w-full max-w-sm relative animate__animated animate__zoomIn">
+            <span onclick="closeModal()" class="absolute top-6 left-6 text-2xl cursor-pointer text-gray-400">×</span>
+            <div id="modalBody" class="mt-4 text-right overflow-y-auto max-h-[75vh]"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAjn2WNPRb_edcRIx8U7WRKsH5-wUYS7lA",
+            authDomain: "kaajjoo-9e88a.firebaseapp.com",
+            databaseURL: "https://kaajjoo-9e88a-default-rtdb.firebaseio.com",
+            projectId: "kaajjoo-9e88a",
+            storageBucket: "kaajjoo-9e88a.appspot.com",
+        };
+        firebase.initializeApp(firebaseConfig);
+        const rdb = firebase.database();
+        let userSession = null;
+        let serverTimeOffset = 0;
+
+        function syncTime() {
+            rdb.ref(".info/serverTimeOffset").on("value", (snap) => {
+                serverTimeOffset = snap.val() || 0;
+            });
+        }
+
+        window.onload = () => {
+            syncTime();
+            setTimeout(() => {
+                document.getElementById('securityCheck').classList.add('hidden');
+                const s = localStorage.getItem('shamil_session');
+                if(s) { userSession = JSON.parse(s); startPlatform(); } 
+                else { document.getElementById('authPage').classList.remove('hidden'); }
+            }, 2000);
+        };
+
+        function startPlatform() {
+            document.getElementById('authPage').classList.add('hidden');
+            document.getElementById('mainPage').classList.remove('hidden');
+            initSlider(); renderVIP(); startLiveTimer();
+
+            rdb.ref('users/' + userSession.username).on('value', snap => {
+                const d = snap.val(); if(!d) return;
+                userSession = d;
+                document.getElementById('uNameDisp').innerText = d.username;
+                document.getElementById('uBalDisp').innerText = `$${(d.balance || 0).toFixed(2)}`;
+                document.getElementById('uProfitDisp').innerText = `$${(d.planProfit || 0).toFixed(2)}`;
+                document.getElementById('uCountDisp').innerText = d.subscriptionsCount || 0;
+                document.getElementById('uVipDisp').innerText = d.hasActivePlan ? `VIP ${d.planLevel} نشط` : "لا يوجد باقة نشطة";
+                document.getElementById('topImg').src = d.img || "";
+                document.getElementById('uRefCode').innerText = d.myReferralCode || "00000000";
+                document.getElementById('glowRing').classList.toggle('hidden', !d.hasActivePlan);
+                if(d.hasActivePlan) checkProfitLogic(d);
+            });
+            loadHistory();
+        }
+
+        function initSlider() {
+            const container = document.getElementById('slider');
+            const images = [
+                "https://images.unsplash.com/photo-1611974715853-2b8ef9a3d136?w=500","https://images.unsplash.com/photo-1640344583441-739881f94caf?w=500","https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=500","https://images.unsplash.com/photo-1621761191319-c6fb6200404a?w=500","https://images.unsplash.com/photo-1633158829585-23bb8f628e3c?w=500","https://images.unsplash.com/photo-1642104704074-907c0698cbd9?w=500","https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=500","https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?w=500","https://images.unsplash.com/photo-1634704784915-aacf363b021f?w=500","https://images.unsplash.com/photo-1642390233410-449e7556011c?w=500","https://images.unsplash.com/photo-1621504450181-5d356f63d3ee?w=500","https://images.unsplash.com/photo-1639813331945-968a10188b14?w=500","https://images.unsplash.com/photo-1622633044146-8848d4c3020a?w=500","https://images.unsplash.com/photo-1644088379091-d574269d4474?w=500","https://images.unsplash.com/photo-1639322537228-f710d846310a?w=500"
+            ];
+            images.forEach((src, i) => {
+                const div = document.createElement('div');
+                div.className = `slide ${i === 0 ? 'active' : ''}`;
+                div.style.backgroundImage = `url('${src}')`;
+                container.appendChild(div);
+            });
+            let cur = 0; setInterval(() => {
+                const slides = document.querySelectorAll('.slide');
+                slides[cur].classList.remove('active');
+                cur = (cur + 1) % slides.length;
+                slides[cur].classList.add('active');
+            }, 3000);
+        }
+
+        function register() {
+            const u = document.getElementById('regUser').value.trim();
+            const e = document.getElementById('regEmail').value.trim();
+            const p = document.getElementById('regPhone').value.trim();
+            const pw = document.getElementById('regPass').value;
+            const ref = document.getElementById('regRef').value.trim();
+            const img = document.getElementById('regPreview').src;
+            if(!u || !p || pw.length < 6) return alert("يرجى ملء الحقول المطلوبة");
+            const myRefCode = Math.floor(10000000 + Math.random() * 90000000).toString();
+            rdb.ref('users/' + u).set({
+                username: u, email: e, phone: p, password: pw, img: img, balance: 0.0, 
+                hasActivePlan: false, planLevel: 0, planProfit: 0, subscriptionsCount: 0, 
+                activePlans: [], myReferralCode: myRefCode, referredBy: ref || null, teamCount: 0, paidReferrals: 0
+            }).then(() => {
+                if(ref) {
+                    rdb.ref('users').once('value', snap => {
+                        snap.forEach(c => {
+                            if(c.val().myReferralCode === ref) {
+                                rdb.ref('teams/' + c.key + '/' + u).set({ username: u, active: false, date: firebase.database.ServerValue.TIMESTAMP });
+                                rdb.ref('users/' + c.key).update({ teamCount: firebase.database.ServerValue.increment(1) });
+                            }
+                        });
+                    });
+                }
+                alert("تم التسجيل بنجاح!"); toggleAuth(false);
+            });
+        }
+
+        function login() {
+            const id = document.getElementById('logId').value.trim();
+            const pw = document.getElementById('logPass').value;
+            rdb.ref('users/' + id).once('value', s => {
+                if(s.exists() && s.val().password === pw) {
+                    localStorage.setItem('shamil_session', JSON.stringify(s.val()));
+                    location.reload();
+                } else alert("بيانات الدخول خاطئة");
+            });
+        }
+
+        function startLiveTimer() { 
+            setInterval(() => { 
+                const n = new Date(Date.now() + serverTimeOffset); 
+                document.getElementById('timerVal').innerText = `${(23-n.getHours()).toString().padStart(2,'0')}:${(59-n.getMinutes()).toString().padStart(2,'0')}:${(59-n.getSeconds()).toString().padStart(2,'0')}`; 
+            }, 1000); 
+        }
+
+        function renderVIP() {
+            const vips = [{l:1, p:50, r:1.5}, {l:2, p:100, r:3.5}, {l:3, p:500, r:20}, {l:4, p:1000, r:45}];
+            document.getElementById('vipGrid').innerHTML = vips.map(v => `<div class="glass p-5 rounded-[2.5rem] text-center border-white/5 animate__animated animate__fadeInUp">
+                <p class="text-[8px] text-blue-400 font-bold uppercase">VIP ${v.l}</p><p class="text-lg font-bold mt-1">$${v.p}</p><p class="text-[8px] text-green-400 mb-4 font-bold">+$${v.r} يومياً</p>
+                <button onclick="activatePlan(${v.l},${v.p},${v.r})" class="w-full bg-blue-600/10 border border-blue-600/30 py-2.5 rounded-xl text-[8px] font-bold active:bg-blue-600 transition">تفعيل</button></div>`).join('');
+        }
+
+        function activatePlan(l, p, r) {
+            if(userSession.balance < p) return alert("الرصيد غير كافٍ للاشتراك");
+            const newPlan = { level: l, price: p, profit: r, date: firebase.database.ServerValue.TIMESTAMP };
+            rdb.ref('users/'+userSession.username).update({
+                balance: userSession.balance - p, hasActivePlan: true, planLevel: l, planProfit: r,
+                planStart: firebase.database.ServerValue.TIMESTAMP, lastProfitTime: firebase.database.ServerValue.TIMESTAMP,
+                subscriptionsCount: (userSession.subscriptionsCount || 0) + 1, activePlans: [...(userSession.activePlans || []), newPlan]
+            }).then(() => {
+                if(userSession.referredBy) handleReferralReward(userSession);
+                alert("🎉 تم التفعيل بنجاح!");
+            });
+        }
+
+        function handleReferralReward(u) {
+            rdb.ref('users').once('value', s => {
+                s.forEach(p => {
+                    if(p.val().myReferralCode === u.referredBy) {
+                        rdb.ref('teams/' + p.key + '/' + u.username).update({ active: true });
+                        let rew = (p.val().paidReferrals || 0) < 10 ? 5.0 : 1.0;
+                        rdb.ref('users/' + p.key).update({ balance: firebase.database.ServerValue.increment(rew), paidReferrals: firebase.database.ServerValue.increment(1) });
+                    }
+                });
+            });
+        }
+
+        function checkProfitLogic(d) {
+            const now = Date.now() + serverTimeOffset;
+            const last = d.lastProfitTime || d.planStart;
+            if (now - last >= 86400000) {
+                rdb.ref('users/' + userSession.username).update({ balance: firebase.database.ServerValue.increment(d.planProfit), lastProfitTime: firebase.database.ServerValue.TIMESTAMP });
+            }
+        }
+
+        // --- تعديل الإيداع والسحب ---
+        function openWalletModal(type) {
+            document.getElementById('modal').classList.remove('hidden');
+            const b = document.getElementById('modalBody');
+            if(type === 'deposit') {
+                b.innerHTML = `
+                    <h3 class="font-bold mb-4 text-blue-400">إيداع رصيد</h3>
+                    <div class="space-y-3">
+                        <select id="pWay" class="input-grad" onchange="document.getElementById('wInfo').classList.toggle('hidden', this.value !== 'usdt')">
+                            <option value="">اختر وسيلة الدفع</option>
+                            <option value="usdt">USDT (TRC20)</option>
+                            <option value="asia">كارت آسياسيل</option>
+                        </select>
+                        <div id="wInfo" class="hidden p-3 bg-blue-600/10 border border-blue-600/20 rounded-xl text-[9px] text-center" onclick="copyText('0xd193a351f670d8e3014d27e92f475710e1fe7229')">
+                            <p class="mb-1 text-blue-400">عنوان المحفظة:</p>
+                            <code class="block truncate">0xd193a351f670d8e3014d27e92f475710e1fe7229</code>
+                            <p class="mt-1 text-[7px] opacity-50">(اضغط للنسخ)</p>
+                        </div>
+                        <input type="text" value="${userSession.username}" readonly class="input-grad opacity-50">
+                        <input type="text" value="${userSession.phone}" readonly class="input-grad opacity-50">
+                        <input type="text" value="${userSession.email}" readonly class="input-grad opacity-50">
+                        <input type="number" id="fAmt" placeholder="المبلغ الذي حولته $" class="input-grad">
+                        <div class="text-right">
+                            <p class="text-[8px] text-gray-500 mb-1">صورة التحويل (Screenshot):</p>
+                            <input type="file" id="fImg" accept="image/*" class="text-[9px]" onchange="previewImg(this, 'dPre')">
+                        </div>
+                        <img id="dPre" class="w-20 h-20 rounded hidden mx-auto object-cover border border-white/10">
+                        <button onclick="subDep()" class="w-full bg-blue-600 py-4 rounded-2xl font-bold text-xs mt-2">إرسال طلب الإيداع</button>
+                    </div>`;
+            } else {
+                b.innerHTML = `
+                    <h3 class="font-bold mb-4 text-green-400">سحب أرباح ($50 Min)</h3>
+                    <div class="space-y-3">
+                        <select id="drWay" class="input-grad">
+                            <option value="usdt">محفظة OKX (USDT)</option>
+                            <option value="asia">رصيد آسياسيل</option>
+                        </select>
+                        <input type="text" id="dAddr" placeholder="عنوان محفظة OKX فقط" class="input-grad">
+                        <input type="text" value="${userSession.username}" readonly class="input-grad opacity-50">
+                        <input type="text" value="${userSession.email}" readonly class="input-grad opacity-50">
+                        <input type="text" value="${userSession.phone}" readonly class="input-grad opacity-50">
+                        <input type="number" id="dAmt" placeholder="المبلغ المطلوب سحبه" class="input-grad" oninput="document.getElementById('tx').innerText = '$'+(this.value*0.1).toFixed(1); document.getElementById('nt').innerText = '$'+(this.value*0.9).toFixed(1)">
+                        <div class="p-3 bg-white/5 rounded-2xl text-[9px] space-y-1">
+                            <div class="flex justify-between text-red-400"><span>استقطاع 10%</span> <span id="tx">$0</span></div>
+                            <div class="flex justify-between text-green-400 font-bold"><span>الصافي المستلم</span> <span id="nt">$0</span></div>
+                        </div>
+                        <button onclick="subWith()" class="w-full bg-green-600 py-4 rounded-2xl font-bold text-xs">تأكيد طلب السحب</button>
+                    </div>`;
+            }
+        }
+
+        function subDep() {
+            const w = document.getElementById('pWay').value; 
+            const a = document.getElementById('fAmt').value; 
+            const i = document.getElementById('dPre').src;
+            if(!w || !a || i.includes('flaticon')) return alert("يرجى ملء جميع الحقول ورفع صورة الإيداع");
+            rdb.ref('transactions').push({ username: userSession.username, amount: a, type: 'deposit', method: w, status: 'pending', time: firebase.database.ServerValue.TIMESTAMP, image: i }).then(() => { 
+                sendNotif(userSession.username, `⏳ تم استلام طلب إيداع بقيمة $${a}.`);
+                alert("تم إرسال الطلب بنجاح"); closeModal(); 
+            });
+        }
+
+        function subWith() {
+            const ad = document.getElementById('dAddr').value; 
+            const a = parseFloat(document.getElementById('dAmt').value);
+            if(!ad || a < 50 || userSession.balance < a) return alert("الحد الأدنى 50$ أو رصيدك غير كافٍ");
+            rdb.ref('users/' + userSession.username).update({ balance: userSession.balance - a });
+            rdb.ref('transactions').push({ username: userSession.username, amount: a, net: a * 0.9, type: 'withdraw', address: ad, status: 'pending', time: firebase.database.ServerValue.TIMESTAMP }).then(() => { 
+                sendNotif(userSession.username, `🚀 طلب سحب بقيمة $${a} قيد المعالجة.`);
+                alert("تم إرسال طلب السحب"); closeModal(); 
+            });
+        }
+
+        function openModal(type) {
+            document.getElementById('modal').classList.remove('hidden');
+            const b = document.getElementById('modalBody');
+            if(type === 'team') {
+                b.innerHTML = `<h3 class="font-bold mb-4 text-blue-400">مركز الفريق</h3>
+                <div class="grid grid-cols-2 gap-2 mb-4 text-center">
+                    <div class="bg-white/5 p-3 rounded-2xl"><p class="text-[7px] text-gray-400">إجمالي الفريق</p><p class="font-bold text-xs">${userSession.teamCount || 0}</p></div>
+                    <div class="bg-white/5 p-3 rounded-2xl"><p class="text-[7px] text-gray-400">المكافآت</p><p class="font-bold text-xs text-green-400">${userSession.paidReferrals || 0}</p></div>
+                </div>
+                <h4 class="text-[9px] font-bold text-green-400 mb-2">الأعضاء المفعلين</h4><div id="actTeam" class="space-y-1 mb-4"></div>
+                <h4 class="text-[9px] font-bold text-gray-500 mb-2">غير المفعلين</h4><div id="inTeam" class="space-y-1"></div>`;
+                rdb.ref('teams/' + userSession.username).once('value', s => {
+                    if(!s.exists()) return;
+                    s.forEach(c => {
+                        const m = c.val(); const html = `<div class="p-2 bg-white/5 rounded-xl text-[9px] flex justify-between"><span>👤 ${m.username}</span><span>${new Date(m.date).toLocaleDateString()}</span></div>`;
+                        if(m.active) document.getElementById('actTeam').innerHTML += html; else document.getElementById('inTeam').innerHTML += html;
+                    });
+                });
+            } else if(type === 'subDetails') {
+                b.innerHTML = `<h3 class="font-bold mb-4 text-blue-400 text-center">تفاصيل باقاتك</h3>`;
+                (userSession.activePlans || []).forEach(p => {
+                    b.innerHTML += `<div class="p-3 bg-white/5 rounded-2xl mb-2 border-r-4 border-blue-500 text-[10px] font-bold">VIP ${p.level} - $${p.price} <br><span class="text-[7px] font-normal opacity-50">${new Date(p.date).toLocaleString()}</span></div>`;
+                });
+            } else if(type === 'profile') {
+                b.innerHTML = `<div class="text-center space-y-4"><img src="${userSession.img}" class="w-20 h-20 mx-auto rounded-full object-cover border-2 border-blue-600"><h4 class="font-bold">${userSession.username}</h4><div class="space-y-2 text-[10px] text-right bg-white/5 p-4 rounded-2xl"><p>📧 ${userSession.email}</p><p>📞 ${userSession.phone}</p><p>🆔 رمز إحالتك: ${userSession.myReferralCode}</p></div><button onclick="logout()" class="w-full bg-red-600/20 text-red-500 py-3 rounded-xl font-bold text-xs">خروج</button></div>`;
+            } else if(type === 'notifs') {
+                b.innerHTML = `<h3 class="font-bold mb-4">الإشعارات</h3><div id="nList" class="space-y-2"></div>`;
+                rdb.ref('notifications/' + userSession.username).limitToLast(10).once('value', s => {
+                    const nl = document.getElementById('nList'); if(!s.exists()) nl.innerHTML = "<p class='text-[10px] opacity-50 text-center py-10'>لا توجد إشعارات</p>";
+                    s.forEach(c => { nl.innerHTML += `<div class="p-3 bg-white/5 rounded-xl border-l-4 border-blue-500 text-[10px]">${c.val().msg}</div>`; });
+                });
+            } else { b.innerHTML = `<h3 class="font-bold mb-4 text-center">الدعم الفني</h3><a href="https://t.me/AlShamil_Support" class="block w-full bg-blue-500 p-4 rounded-2xl text-center font-bold text-xs">تليجرام المباشر</a>`; }
+        }
+
+        function loadHistory() {
+            rdb.ref('transactions').on('value', snap => {
+                const list = document.getElementById('logList'); list.innerHTML = "";
+                snap.forEach(c => {
+                    const t = c.val(); if(t.username === userSession.username) {
+                        list.innerHTML += `<div class="p-3 bg-white/5 rounded-2xl flex justify-between items-center mb-2">
+                            <div><p class="text-[9px] font-bold">${t.type==='deposit'?'إيداع':'سحب'}</p><p class="text-[7px] text-gray-500">${new Date(t.time).toLocaleDateString()}</p></div>
+                            <div class="text-left font-bold"><p class="text-[9px]">$${t.amount}</p><p class="text-[7px] ${t.status==='pending'?'text-yellow-500':'text-green-500'}">${t.status}</p></div></div>`;
+                    }
+                });
+            });
+        }
+
+        function switchTab(t) { document.getElementById('homeContent').classList.toggle('hidden', t !== 'home'); document.getElementById('walletContent').classList.toggle('hidden', t !== 'wallet'); document.getElementById('homeBtn').classList.toggle('active', t === 'home'); document.getElementById('walletBtn').classList.toggle('active', t === 'wallet'); }
+        function previewImg(i, t) { if (i.files && i.files[0]) { const r = new FileReader(); r.onload = (e) => { const el = document.getElementById(t); el.src = e.target.result; el.classList.remove('hidden'); }; r.readAsDataURL(i.files[0]); } }
+        function copyRef() { navigator.clipboard.writeText(userSession.myReferralCode).then(() => alert("تم نسخ رمز الإحالة")); }
+        function copyText(txt) { navigator.clipboard.writeText(txt).then(() => alert("تم النسخ")); }
+        function sendNotif(user, msg) { rdb.ref('notifications/' + user).push({ msg: msg, time: firebase.database.ServerValue.TIMESTAMP }); }
+        function toggleAuth(r) { document.getElementById('loginForm').classList.toggle('hidden', r); document.getElementById('regForm').classList.toggle('hidden', !r); }
+        function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+        function logout() { localStorage.clear(); location.reload(); }
+    </script>
+</body>
+</html>
