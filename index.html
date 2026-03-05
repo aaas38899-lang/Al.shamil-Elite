@@ -22,7 +22,6 @@
         .btn-grad:active { transform: scale(0.95); }
         .input-grad { background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 12px; width: 100%; color: white; outline: none; font-size: 11px; }
         
-        /* نافذة الحظر الإجباري */
         #banOverlay { position: fixed; inset: 0; background: #000; z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
 
         .timer-ring { width: 150px; height: 150px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; background: rgba(0,0,0,0.7); }
@@ -43,7 +42,6 @@
         @keyframes ticker-reverse { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
         .hidden { display: none !important; }
 
-        /* ستايل الفريق الاحترافي */
         .team-card { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%); border-radius: 20px; padding: 15px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-left: 8px; box-shadow: 0 0 8px currentColor; }
     </style>
@@ -237,7 +235,7 @@
         function openWalletModal(type) {
             document.getElementById('modal').classList.remove('hidden'); const b = document.getElementById('modalBody');
             if(type === 'deposit') {
-                b.innerHTML = `<h3 class="font-bold mb-6 text-blue-400 uppercase tracking-widest text-center">إيداع رصيد (USDT)</h3><div class="space-y-4"><div class="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-[9px] text-center" onclick="copyText('0xd193a351f670d8e3014d27e92f475710e1fe7229')"><p class="text-blue-300 mb-1">عنوان المحفظة (اضغط للنسخ)</p><code class="block truncate font-bold">0xd193a351f670d8e3014d27e92f475710e1fe7229</code></div><input type="text" id="dU" value="${userSession.username}" class="input-grad" readonly><input type="email" id="dE" value="${userSession.email}" class="input-grad" placeholder="البريد"><input type="tel" id="dP" value="${userSession.phone}" class="input-grad" placeholder="الهاتف"><input type="number" id="dA" placeholder="أدخل المبلغ دولار" class="input-grad"><div class="text-right"><p class="text-[9px] opacity-40 mb-1">ارفع لقطة شاشة للتحويل:</p><input type="file" id="dI" accept="image/*" onchange="previewImg(this, 'dPre')" class="text-[9px]"></div><img id="dPre" class="w-24 h-24 hidden mx-auto rounded-xl border mt-2 border-white/10 shadow-lg"><button onclick="submitDeposit()" class="w-full btn-grad py-4 rounded-2xl font-bold shadow-xl">إرسال الطلب للمراجعة</button></div>`;
+                b.innerHTML = `<h3 class="font-bold mb-6 text-blue-400 uppercase tracking-widest text-center">إيداع رصيد (USDT)</h3><div class="space-y-4"><div class="p-4 bg-blue-500/10 border border-blue-500/20 rounded-2xl text-[9px] text-center" onclick="copyText('XKOD193a351f670D8E3014d27E92F475710e1fE7229')"><p class="text-blue-300 mb-1">عنوان المحفظة (اضغط للنسخ)</p><code class="block truncate font-bold">XKOD193a351f670D8E3014d27E92F475710e1fE7229</code></div><input type="text" id="dU" value="${userSession.username}" class="input-grad" readonly><input type="email" id="dE" value="${userSession.email}" class="input-grad" placeholder="البريد"><input type="tel" id="dP" value="${userSession.phone}" class="input-grad" placeholder="الهاتف"><input type="number" id="dA" placeholder="أدخل المبلغ دولار" class="input-grad"><div class="text-right"><p class="text-[9px] opacity-40 mb-1">ارفع لقطة شاشة للتحويل:</p><input type="file" id="dI" accept="image/*" onchange="previewImg(this, 'dPre')" class="text-[9px]"></div><img id="dPre" class="w-24 h-24 hidden mx-auto rounded-xl border mt-2 border-white/10 shadow-lg"><button onclick="submitDeposit()" class="w-full btn-grad py-4 rounded-2xl font-bold shadow-xl">إرسال الطلب للمراجعة</button></div>`;
             } else {
                 b.innerHTML = `<h3 class="font-bold mb-6 text-green-400 text-center uppercase tracking-widest">سحب أرباح (Min 50$)</h3><div class="space-y-4"><input type="text" id="wW" placeholder="عنوان محفظة المستلم (USDT)" class="input-grad"><input type="text" id="wN" value="${userSession.username}" class="input-grad" readonly><input type="number" id="wA" placeholder="المبلغ المطلوب سحبه" class="input-grad" oninput="calcWith(this.value)"><div class="p-4 glass rounded-2xl text-[10px] flex justify-between"><span>ضريبة السحب 10%:</span><span id="tV" class="text-red-400 font-bold">$0</span></div><button onclick="submitWithdraw()" class="w-full btn-grad py-4 rounded-2xl font-bold shadow-xl">تأكيد طلب السحب</button></div>`;
             }
