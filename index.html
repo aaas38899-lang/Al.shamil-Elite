@@ -2,540 +2,1207 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Makasib Ultimate V6 - Professional Edition</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة مكاسب للتمويل والاستثمار المطور</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        :root { --gold: #d4af37; --blue: #1e3a8a; --dark: #020617; }
-        body { 
-            font-family: 'Cairo', sans-serif; background: var(--dark); color: #fff; margin: 0;
-            background: radial-gradient(circle at top, #1e3a8a, #020617, #000);
-            background-attachment: fixed; overflow-x: hidden; font-size: 11px;
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0c0f26 0%, #17123a 50%, #050814 100%);
+            --card-bg: rgba(20, 24, 50, 0.88);
+            --text-white: #ffffff;
+            --text-dim: #b0b5e0;
+            --accent-blue: #00d2ff;
+            --accent-purple: #9d4edd;
+            --border-color: rgba(255, 255, 255, 0.08);
         }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(212, 175, 55, 0.1); border-radius: 20px; }
-        .btn-gold { background: linear-gradient(135deg, #d4af37, #f59e0b); color: #000; font-weight: 900; transition: 0.3s; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
-        .btn-gold:active { transform: scale(0.95); }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; user-select: none; }
         
-        #sliderContainer { height: 180px; border-radius: 20px; overflow: hidden; position: relative; margin: 10px; border: 1px solid rgba(212,175,55,0.2); }
-        .slide { position: absolute; inset: 0; opacity: 0; transition: 1s ease-in-out; background-size: cover; background-position: center; }
-        .slide.active { opacity: 1; }
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-white);
+            min-height: 100vh;
+            overflow-x: hidden;
+            font-size: 13px;
+        }
 
-        .marquee { width: 100%; overflow: hidden; background: rgba(212, 175, 55, 0.1); padding: 8px 0; border-y: 1px solid var(--gold); margin-bottom: 10px; }
-        .marquee-text { display: inline-block; white-space: nowrap; animation: marquee-reverse 25s linear infinite; color: var(--gold); font-weight: bold; font-size: 10px; }
-        @keyframes marquee-reverse { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        /* تأثير الانتظار الدوار العام */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 11, 25, 0.92); z-index: 9999;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .spinner-arrow {
+            width: 45px; height: 45px;
+            border: 4px solid transparent;
+            border-top: 4px solid var(--accent-blue);
+            border-right: 4px solid var(--accent-purple);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(2, 6, 23, 0.98); border-top: 1px solid rgba(212,175,55,0.3); z-index: 100; padding: 12px 0; border-radius: 25px 25px 0 0; }
-        .tab-content { display: none; padding-bottom: 110px; animation: slideUp 0.4s ease; }
-        .tab-content.active { display: block; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; translateY(0); } }
+        /* شريط الشرح اللانهائي */
+        .marquee-container {
+            width: 100%; background: rgba(0, 0, 0, 0.7);
+            border-bottom: 1px solid var(--accent-purple);
+            overflow: hidden; position: fixed; top: 0; z-index: 999; height: 35px; display: flex; align-items: center;
+        }
+        .marquee-text {
+            display: flex; white-space: nowrap;
+            animation: marqueeMove 25s linear infinite;
+            direction: ltr;
+        }
+        .marquee-item { padding: 0 40px; font-size: 11px; color: #fff; font-weight: 600; }
+        @keyframes marqueeMove { 0% { transform: translate3d(-100%, 0, 0); } 100% { transform: translate3d(100%, 0, 0); } }
 
-        #loadingOverlay { position: fixed; inset: 0; background: #020617; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .ring { width: 45px; height: 45px; border: 3px solid rgba(212,175,55,0.1); border-top: 3px solid var(--gold); border-radius: 50%; animation: rotate 1s linear infinite; }
-        @keyframes rotate { 100% { transform: rotate(360deg); } }
+        .app-container { margin-top: 50px; margin-bottom: 75px; padding: 15px; display: none; }
+        .app-container.active { display: block; }
+
+        /* واجهات الدخول */
+        .auth-card {
+            max-width: 350px; margin: 30px auto; padding: 22px;
+            background: var(--card-bg); border-radius: 14px;
+            border: 1px solid var(--border-color); text-align: center;
+        }
+        .auth-card h2 { font-size: 20px; color: var(--accent-blue); margin-bottom: 4px; }
+        .auth-card h3 { font-size: 12px; color: var(--text-dim); margin-bottom: 15px; }
+        .auth-img { width: 65px; height: 65px; margin-bottom: 15px; }
         
-        select, input { background: rgba(255,255,255,0.05) !important; color: white !important; border: 1px solid rgba(212,175,55,0.2) !important; }
+        .input-group { position: relative; margin-bottom: 12px; text-align: right; }
+        .input-group label { display: block; font-size: 11px; color: var(--accent-blue); margin-bottom: 4px; padding-right: 2px; }
+        .input-group i { position: absolute; right: 12px; top: 33px; font-size: 12px; color: var(--text-dim); }
+        .input-group.no-label i { top: 12px; }
+        
+        input, select, textarea {
+            width: 100%; padding: 10px 35px 10px 12px; background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-color); border-radius: 7px; color: #fff; font-size: 12px;
+        }
+        input:focus, select:focus { border-color: var(--accent-blue); outline: none; }
+
+        .btn {
+            width: 100%; padding: 10px; background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            border: none; border-radius: 7px; color: white; font-weight: 600; font-size: 12px; cursor: pointer; transition: 0.3s;
+            text-align: center; display: inline-block; text-decoration: none;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-secondary { background: rgba(255,255,255,0.08); color: #fff; font-size: 11px; margin-top: 10px; }
+
+        /* الترويسة */
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--card-bg); padding: 12px; border-radius: 12px; margin-bottom: 15px;
+        }
+        .top-icons i { font-size: 17px; margin-right: 12px; cursor: pointer; position: relative; }
+        
+        /* السلايدر الواقعي */
+        .slider-box {
+            position: relative; width: 100%; height: 160px; border-radius: 12px; overflow: hidden; margin-bottom: 15px;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.05);
+        }
+        .slider-bg-img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.55) contrast(1.1); transition: transform 0.8s ease; }
+        .slider-content-overlay { position: absolute; bottom: 0; right: 0; width: 100%; padding: 12px; background: linear-gradient(to top, rgba(5,8,20,0.95), transparent); }
+        .slider-badge { background: var(--accent-blue); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 4px; }
+        .slider-desc { font-size: 12px; font-weight: 600; text-shadow: 1px 1px 2px #000; }
+
+        /* الحساب */
+        .user-main-card {
+            background: linear-gradient(135deg, #16193b 0%, #251c5a 100%);
+            padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .balance-title { font-size: 11px; color: var(--text-dim); }
+        .balance-value { font-size: 24px; font-weight: bold; color: #fff; margin: 3px 0; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+        .stat-box { background: rgba(0,0,0,0.25); padding: 8px; border-radius: 7px; text-align: center; cursor: pointer; }
+        .stat-box span { display: block; font-size: 9px; color: var(--text-dim); }
+        .stat-box strong { font-size: 11px; color: var(--accent-blue); }
+
+        /* العداد الدائري للتعدين */
+        .timer-cone-container {
+            margin: 15px auto; width: 135px; height: 135px; position: relative;
+            background: conic-gradient(from 0deg, var(--accent-blue), var(--accent-purple), transparent 75%);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            animation: rotateConeOuter 3s linear infinite;
+        }
+        @keyframes rotateConeOuter { 100% { transform: rotate(360deg); } }
+        
+        .timer-cone-inner {
+            width: 116px; height: 116px; background: #0c0f26; border-radius: 50%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            animation: rotateConeOuter 3s linear infinite reverse;
+        }
+        .timer-digits { font-size: 16px; font-weight: bold; color: #fff; letter-spacing: 0.5px; }
+
+        /* خط تقدم الـ XP */
+        .xp-container { background: rgba(255,255,255,0.04); padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .xp-bar-bg { width: 100%; height: 7px; background: #1a1a2e; border-radius: 4px; overflow: hidden; margin-top: 5px; }
+        .xp-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #00ffcc, var(--accent-blue)); transition: 0.4s; }
+
+        /* شبكة أسواق التداول */
+        .crypto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: var(--card-bg); padding: 10px; border-radius: 8px; }
+        .crypto-item { display: flex; justify-content: space-between; font-size: 11px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+
+        /* قائمة استعراض أعضاء الفريق */
+        .team-list-container { max-height: 200px; overflow-y: auto; margin-top: 15px; }
+        .team-member-item {
+            background: rgba(255, 255, 255, 0.04); padding: 8px 12px; border-radius: 6px;
+            margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;
+            border-right: 3px solid var(--accent-blue);
+        }
+
+        /* شريط سفلي */
+        .bottom-navbar {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #090b18;
+            border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; padding: 10px 0; z-index: 999;
+        }
+        .nav-link { display: flex; flex-direction: column; align-items: center; font-size: 11px; color: var(--text-dim); cursor: pointer; }
+        .nav-link.active { color: var(--accent-blue); }
+        .nav-link i { font-size: 17px; margin-bottom: 2px; }
+
+        /* النوافذ المنبثقة */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; padding: 15px;
+        }
+        .modal-content {
+            background: #11142a; padding: 20px; border-radius: 14px; width: 100%; max-width: 380px;
+            border: 1px solid var(--accent-purple); max-height: 85vh; overflow-y: auto;
+        }
+        .close-btn { float: left; color: #ff3366; cursor: pointer; font-size: 18px; }
+        .log-box { font-size: 11px; background: rgba(0,0,0,0.3); padding: 7px; border-radius: 5px; margin-top: 5px; border-left: 3px solid var(--accent-blue); }
+
+        /* ==================== تصميم عداد التنزيل المتطور ==================== */
+        .download-box { text-align: center; padding: 20px 0; }
+        .progress-circle-bar {
+            width: 110px; height: 110px; border-radius: 50%;
+            background: conic-gradient(#ff3366 0%, #222 0%); 
+            margin: 15px auto; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            transition: background 0.1s linear;
+        }
+        .progress-circle-inner { 
+            width: 94px; height: 94px; background: #11142a; border-radius: 50%; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            font-weight: bold; font-size: 16px; color: #fff;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        .download-status-text { font-size: 11px; color: var(--text-dim); margin-top: 4px; font-weight: normal; }
+
+        /* أيقونة الدعم العائمة */
+        .floating-support-btn {
+            position: fixed; bottom: 75px; left: 20px; width: 52px; height: 52px;
+            background: linear-gradient(135deg, #0088cc, #00a8ff);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4); z-index: 9999; cursor: pointer;
+            animation: pulseSupport 2s infinite; transition: 0.3s;
+        }
+        .floating-support-btn i { color: #fff; font-size: 24px; }
+        @keyframes pulseSupport {
+            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4); }
+            50% { transform: scale(1.06); box-shadow: 0 4px 22px rgba(0, 136, 204, 0.7); }
+            100% { transform: scale(1); box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4); }
+        }
+
+        /* تنسيقات الصورة الشخصية المضافة */
+        .profile-avatar {
+            width: 75px; height: 75px; border-radius: 50%; object-fit: cover;
+            border: 2px solid var(--accent-blue); margin-bottom: 10px;
+            box-shadow: 0 0 10px var(--accent-blue);
+        }
     </style>
 </head>
 <body>
 
-<div id="loadingOverlay">
-    <div class="ring"></div>
-    <h2 class="text-gold mt-4 font-black tracking-widest text-[10px]">MAKASIB V6</h2>
-</div>
-
-<div id="authScreen" class="hidden fixed inset-0 z-[1000] bg-[#020617] flex items-center justify-center p-6 text-center">
-    <div class="glass p-8 w-full max-w-sm">
-        <div id="loginForm" class="space-y-4">
-            <h1 class="text-4xl font-black text-gold mb-6">مكاسب</h1>
-            <input type="text" id="logUser" placeholder="البريد أو الهاتف" class="w-full p-4 rounded-xl outline-none">
-            <input type="password" id="logPass" placeholder="كلمة المرور" class="w-full p-4 rounded-xl outline-none">
-            <button onclick="login()" class="w-full btn-gold p-4 rounded-xl shadow-xl">دخول</button>
-            <p class="text-[10px] text-gray-400">ليس لديك حساب؟ <span onclick="toggleAuth(true)" class="text-gold font-bold cursor-pointer">إنشاء حساب</span></p>
-        </div>
-        <div id="registerForm" class="hidden space-y-3">
-            <h2 class="text-gold font-bold mb-2">تسجيل جديد</h2>
-            <input type="text" id="regName" placeholder="الاسم الكامل" class="w-full p-3 rounded-xl outline-none">
-            <input type="email" id="regEmail" placeholder="البريد الإلكتروني" class="w-full p-3 rounded-xl outline-none">
-            <input type="tel" id="regPhone" placeholder="رقم الهاتف" class="w-full p-3 rounded-xl outline-none">
-            <input type="password" id="regPass" placeholder="كلمة المرور" class="w-full p-3 rounded-xl outline-none">
-            <input type="text" id="regRef" placeholder="كود الإحالة (اختياري)" class="w-full p-3 rounded-xl outline-none">
-            <div class="flex flex-col items-center gap-2">
-                <input type="file" id="regImg" class="hidden" onchange="previewImg(this, 'regPreview')">
-                <div onclick="document.getElementById('regImg').click()" class="w-16 h-16 rounded-full border-2 border-dashed border-gold/30 flex items-center justify-center cursor-pointer overflow-hidden">
-                    <img id="regPreview" class="hidden w-full h-full object-cover">
-                    <span id="regPlaceholder" class="text-[8px] text-gold">الصورة</span>
-                </div>
-            </div>
-            <button onclick="register()" class="w-full btn-gold p-4 rounded-xl">تأكيد الحساب</button>
-            <p onclick="toggleAuth(false)" class="text-[10px] cursor-pointer">رجوع للدخول</p>
+    <div class="marquee-container">
+        <div class="marquee-text">
+            <div class="marquee-item">مكاسب: منصة تشغيل أموال رائدة في جميع مجالات التمويل ونظام التمويه للمشاريع الصغيرة لتواكب العولمة والمشاريع أونلاين.</div>
+            <div class="marquee-item">قم بتنشيط خطتك الاستثمارية الآن واستلم العوائد اليومية المقررة والمضمونة آلياً 2026.</div>
         </div>
     </div>
-</div>
 
-<div id="mainContent" class="hidden">
-    <header class="p-4 flex justify-between items-center sticky top-0 z-50 bg-[#020617]/90 backdrop-blur-md border-b border-gold/10">
-        <div class="flex items-center gap-3">
-            <img id="uImgHead" class="w-11 h-11 rounded-full border-2 border-gold object-cover shadow-lg">
-            <div>
-                <p id="uNameHead" class="font-black text-[10px] text-white">...</p>
-                <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span><span class="text-[7px] text-gray-400">عضو نشط</span></div>
-            </div>
-        </div>
-        <div class="flex items-center gap-3">
-            <div class="relative cursor-pointer" onclick="showTab('notificationsTab')">
-                <span class="text-2xl">🔔</span>
-                <div id="notifDot" class="hidden absolute -top-1 -right-1 w-3 h-3 bg-red-600 rounded-full border-2 border-[#020617]"></div>
-            </div>
-            <div class="bg-gold/10 border border-gold/30 px-4 py-1.5 rounded-full"><span id="uBalHead" class="text-gold font-black text-xs">$0.00</span></div>
-        </div>
-    </header>
-
-    <div class="marquee"><div class="marquee-text">🚀 نظام مكاسب V6: باقات استثمارية جديدة بعوائد يومية تصل إلى 267$ - مدة الاشتراك 60 يوماً لجميع الفئات 🚀</div></div>
-
-    <main class="p-2">
-        <div id="home" class="tab-content active space-y-4">
-            <div id="sliderContainer"></div>
-            <div class="glass p-5 flex justify-between items-center mx-2 shadow-2xl bg-gradient-to-l from-blue-900/20 to-transparent">
-                <div>
-                    <p class="text-[8px] text-gray-400 uppercase">الرصيد الكلي</p>
-                    <h2 class="text-3xl font-black text-white">$<span id="uBalMain">0.00</span></h2>
-                </div>
-                <div class="text-right">
-                    <p id="timer" class="text-gold font-bold text-xs">--:--:--</p>
-                    <p class="text-[6px] opacity-40 uppercase">توزيع الأرباح القادم</p>
-                </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3 mx-2">
-                <div class="glass p-3 text-center">
-                    <p class="text-[8px] opacity-60">ربحك اليومي</p>
-                    <p id="dailyE" class="text-gold font-black text-sm">$0.00</p>
-                </div>
-                <div class="glass p-3 text-center cursor-pointer" onclick="showSubsDetails()">
-                    <p class="text-[8px] opacity-60">الاشتراكات النشطة</p>
-                    <p id="subCount" class="text-green-500 font-black text-sm">0</p>
-                </div>
-            </div>
-            <h3 class="text-[10px] font-bold text-gold px-3 flex items-center gap-2"><span>💎</span> باقاتك النشطة (اضغط للتفاصيل)</h3>
-            <div id="activePlansGrid" class="grid grid-cols-2 gap-3 px-2"></div>
-        </div>
-
-        <div id="invest" class="tab-content space-y-3 px-2">
-            <h2 class="text-sm font-black text-gold">مركز الاستثمار (خطة 60 يوماً)</h2>
-            <div id="marketList" class="grid gap-3"></div>
-        </div>
-
-        <div id="wallet" class="tab-content space-y-4 px-2">
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="openFinModal('deposit')" class="btn-gold p-4 rounded-2xl flex flex-col items-center gap-1 shadow-lg shadow-gold/10"><span class="text-lg">📥</span><span>إيداع</span></button>
-                <button onclick="openFinModal('withdraw')" class="glass p-4 rounded-2xl border-white/20 flex flex-col items-center gap-1"><span class="text-lg">📤</span><span>سحب</span></button>
-            </div>
-            <div class="glass p-4">
-                <h3 class="text-[10px] font-bold mb-3 text-gold">سجل المعاملات المالية</h3>
-                <div id="historyList" class="space-y-3"></div>
-            </div>
-        </div>
-
-        <div id="agents" class="tab-content space-y-3 px-2">
-            <div class="flex justify-between items-center"><h2 class="text-sm font-black text-gold">وكلاء الشحن</h2><button id="addAgBtn" onclick="openAgForm()" class="hidden bg-gold text-black w-8 h-8 rounded-full font-bold shadow-lg">+</button></div>
-            <div id="agentsGrid" class="grid gap-3"></div>
-        </div>
-
-        <div id="team" class="tab-content space-y-4 px-2">
-            <div class="glass p-5 text-center bg-gradient-to-b from-gold/5 to-transparent">
-                <p class="text-[9px] opacity-60 mb-1">مكافآت الإحالة</p>
-                <h2 id="teamBon" class="text-3xl font-black text-gold">$0.00</h2>
-            </div>
-            <h3 class="text-[10px] font-bold text-gold px-1">أعضاء فريقك</h3>
-            <div id="teamGrid" class="space-y-2"></div>
-        </div>
-
-        <div id="profile" class="tab-content space-y-4 px-2">
-            <div class="glass p-6 text-center">
-                <img id="profImg" class="w-24 h-24 mx-auto rounded-full border-4 border-gold object-cover shadow-2xl mb-4">
-                <h2 id="profNameDisplay" class="font-black text-white text-lg">...</h2>
-                <div class="mt-3 bg-black/40 p-3 rounded-xl flex justify-between text-[8px] border border-white/5">
-                    <span class="opacity-50">رابط الإحالة:</span><span id="profCode" class="text-gold font-bold"></span>
-                </div>
-                <div class="grid grid-cols-2 gap-2 mt-4">
-                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[7px] opacity-50">إجمالي الأرباح</p><p id="pTotalProf" class="text-green-500 font-bold">$0.00</p></div>
-                    <div class="bg-white/5 p-3 rounded-xl"><p class="text-[7px] opacity-50">باقات نشطة</p><p id="pSubCount" class="text-blue-500 font-bold">0</p></div>
-                </div>
-            </div>
-            <button onclick="logout()" class="w-full p-4 bg-red-600/10 text-red-500 rounded-xl text-[10px] font-black border border-red-600/20">تسجيل الخروج</button>
-        </div>
-
-        <div id="notificationsTab" class="tab-content space-y-4 px-2">
-            <h2 class="text-sm font-black text-gold">سجل التنبيهات</h2>
-            <div id="notifsList" class="space-y-3"></div>
-        </div>
-    </main>
-
-    <nav class="nav-bar flex justify-around">
-        <button onclick="showTab('home')" class="nav-it active flex flex-col items-center gap-1"><span class="text-xl">🏠</span><span class="text-[7px]">الرئيسية</span></button>
-        <button onclick="showTab('invest')" class="nav-it flex flex-col items-center gap-1 opacity-40"><span class="text-xl">💎</span><span class="text-[7px]">الباقات</span></button>
-        <button onclick="showTab('wallet')" class="nav-it flex flex-col items-center gap-1 opacity-40"><span class="text-xl">💳</span><span class="text-[7px]">محفظتي</span></button>
-        <button onclick="showTab('agents')" class="nav-it flex flex-col items-center gap-1 opacity-40"><span class="text-xl">🤝</span><span class="text-[7px]">الوكلاء</span></button>
-        <button onclick="showTab('team')" class="nav-it flex flex-col items-center gap-1 opacity-40"><span class="text-xl">👥</span><span class="text-[7px]">الفريق</span></button>
-        <button onclick="showTab('profile')" class="nav-it flex flex-col items-center gap-1 opacity-40"><span class="text-xl">👤</span><span class="text-[7px]">حسابي</span></button>
-    </nav>
-</div>
-
-<div id="modal" class="fixed inset-0 bg-black/95 hidden z-[2000] p-6 flex items-center justify-center">
-    <div class="glass p-6 w-full max-w-sm max-h-[90vh] overflow-y-auto relative border-gold/30">
-        <button onclick="closeModal()" class="absolute top-3 left-3 text-gold text-3xl font-bold">×</button>
-        <div id="modalContent" class="mt-4"></div>
+    <div id="loading_screen" class="loading-overlay">
+        <div class="spinner-arrow"></div>
+        <p style="margin-top:15px; font-size:11px; color:var(--accent-blue);">جاري المعالجة والمزامنة الآمنة...</p>
     </div>
-</div>
 
-<script>
-    const firebaseConfig = { apiKey: "AIzaSyAjn2WNPRb_edcRIx8U7WRKsH5-wUYS7lA", databaseURL: "https://kaajjoo-9e88a-default-rtdb.firebaseio.com" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    let uKey = localStorage.getItem('mk_user_key'), uData = null, fileData = "";
-    const adminMail = "Saged5520y@gmail.com";
-    const appUsdtWallet = "TNc5yGf6...أدخل_محفظتك_هنا";
-
-    // الباقات الجديدة
-    const plansMarket = [
-        { cost: 30, daily: 1, monthly: 30 },
-        { cost: 60, daily: 2, monthly: 60 },
-        { cost: 120, daily: 4, monthly: 120 },
-        { cost: 480, daily: 8, monthly: 240 }, // ملاحظة: الربح الشهري لـ 480 هو 240 بناءً على يومي 8، لكن طلبت 480، سأعتمد اليومي 8
-        { cost: 960, daily: 16, monthly: 480 },
-        { cost: 1920, daily: 32, monthly: 960 },
-        { cost: 4000, daily: 133.33, monthly: 4000 },
-        { cost: 6000, daily: 200, monthly: 6000 },
-        { cost: 8000, daily: 266.66, monthly: 8000 }
-    ];
-
-    async function init() {
-        if(!uKey) {
-            document.getElementById('loadingOverlay').style.display = 'none';
-            document.getElementById('authScreen').classList.remove('hidden');
-            return;
-        }
-        db.ref('users/'+uKey).on('value', async snap => {
-            uData = snap.val();
-            if(!uData) return logout();
-            await checkProfitsAndExpiry();
-            renderUI();
-            document.getElementById('loadingOverlay').style.display = 'none';
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-        });
-    }
-
-    async function checkProfitsAndExpiry() {
-        db.ref(".info/serverTimeOffset").once("value", async offsetSnap => {
-            const now = Date.now() + (offsetSnap.val() || 0);
-            const last = uData.lastProfitTime || now;
+    <div id="auth_view" class="app-container active">
+        <div id="register_box" class="auth-card">
+            <i class="fa fa-cubes-stacked auth-img" style="font-size: 45px; color: var(--accent-blue);"></i>
+            <h2>MAKASIB</h2>
+            <h3>إنشاء حساب ومزامنة سحابية</h3>
             
-            let plans = uData.activePlansDetails || [];
-            let dailyTotal = 0;
-            let expiredCount = 0;
-
-            // تصفية الباقات التي تجاوزت شهرين (60 يوم)
-            const activePlans = plans.filter(p => {
-                const ageDays = (now - p.ts) / (1000 * 60 * 60 * 24);
-                if (ageDays >= 60) {
-                    expiredCount++;
-                    return false;
-                }
-                dailyTotal += p.daily;
-                return true;
-            });
-
-            let updates = {};
-            let changed = false;
-
-            if(expiredCount > 0) {
-                updates.activePlansDetails = activePlans;
-                addNotif("⚠️ انتهاء باقة", `انتهت صلاحية ${expiredCount} باقة بعد اكتمال شهرين.`);
-                changed = true;
-            }
-
-            if (now - last >= 86400000) {
-                if(dailyTotal > 0) {
-                    updates.balance = (uData.balance || 0) + dailyTotal;
-                    updates.totalProfits = (uData.totalProfits || 0) + dailyTotal;
-                    addNotif("💰 توزيع أرباح", `تمت إضافة أرباح اليوم $${dailyTotal.toFixed(2)}.`);
-                }
-                updates.lastProfitTime = now;
-                changed = true;
-            }
-
-            if(changed) await db.ref('users/'+uKey).update(updates);
-        });
-    }
-
-    function renderUI() {
-        document.getElementById('uNameHead').innerText = uData.username;
-        document.getElementById('profNameDisplay').innerText = uData.username;
-        document.getElementById('uImgHead').src = uData.img;
-        document.getElementById('profImg').src = uData.img;
-        document.getElementById('uBalHead').innerText = `$${(uData.balance || 0).toFixed(2)}`;
-        document.getElementById('uBalMain').innerText = (uData.balance || 0).toFixed(2);
-        document.getElementById('profCode').innerText = uData.myRefCode;
-        document.getElementById('pTotalProf').innerText = `$${(uData.totalProfits || 0).toFixed(2)}`;
-        
-        const plans = uData.activePlansDetails || [];
-        document.getElementById('subCount').innerText = plans.length;
-        document.getElementById('pSubCount').innerText = plans.length;
-        
-        let dE = 0; plans.forEach(p => dE += p.daily);
-        document.getElementById('dailyE').innerText = `$${dE.toFixed(2)}`;
-
-        renderSlider();
-        renderMarket();
-        renderActivePlans();
-        renderHistory();
-        renderAgents();
-        renderTeam();
-        renderNotifs();
-    }
-
-    function renderSlider() {
-        const imgs = ["https://i.ibb.co/5gWjTtH1/IMG-20260317-161222-576.jpg", "https://i.ibb.co/67xjtzhf/1773729649466.png", "https://i.ibb.co/Jh1GCqB/1773729540326.png"];
-        const container = document.getElementById('sliderContainer');
-        if(container.innerHTML === "") {
-            container.innerHTML = imgs.map((src, i) => `<div class="slide ${i===0?'active':''}" style="background-image:url('${src}')"></div>`).join('');
-            let current = 0;
-            setInterval(() => {
-                const slides = document.querySelectorAll('.slide');
-                if(slides.length > 0) {
-                    slides[current].classList.remove('active');
-                    current = (current + 1) % slides.length;
-                    slides[current].classList.add('active');
-                }
-            }, 5000);
-        }
-    }
-
-    function renderMarket() {
-        document.getElementById('marketList').innerHTML = plansMarket.map(p => `
-            <div class="glass p-4 flex justify-between items-center border-r-4 border-gold active:scale-95 transition">
-                <div>
-                    <p class="font-black text-[11px]">باقة استثمار $${p.cost}</p>
-                    <p class="text-[8px] text-green-500 font-bold">الربح: $${p.daily.toFixed(2)} يومياً / $${p.monthly} شهرياً</p>
-                    <p class="text-[6px] opacity-50">المدة: 60 يوماً</p>
-                </div>
-                <button onclick="buyP(${p.cost}, ${p.daily})" class="btn-gold px-5 py-2 rounded-xl text-[9px]">تفعيل</button>
-            </div>`).join('');
-    }
-
-    async function buyP(amt, daily) {
-        if(uData.balance < amt) return alert("الرصيد غير كافٍ للاشتراك.");
-        if(confirm(`تأكيد تفعيل باقة $${amt} لمدة شهرين؟`)) {
-            let list = uData.activePlansDetails || [];
-            const now = new Date();
-            list.push({ 
-                amount: amt, 
-                daily: daily,
-                date: now.toLocaleDateString('ar-EG'), 
-                time: now.toLocaleTimeString('ar-EG'),
-                ts: Date.now() 
-            });
-            await db.ref('users/'+uKey).update({ balance: uData.balance - amt, activePlansDetails: list });
-            addNotif("💎 باقة جديدة", `تم تفعيل باقة $${amt} بنجاح.`);
-            alert("تم تفعيل الباقة!");
-        }
-    }
-
-    function renderActivePlans() {
-        const list = uData.activePlansDetails || [];
-        document.getElementById('activePlansGrid').innerHTML = list.map((p, index) => `
-            <div onclick="showSingleSubDetails(${index})" class="glass p-3 text-center border-b-2 border-gold/20 active:scale-95 transition">
-                <p class="text-gold font-black text-[10px]">$${p.amount}</p>
-                <p class="text-[7px] text-green-500 font-bold">نشطة ✅</p>
-                <p class="text-[6px] opacity-40">اضغط للتفاصيل</p>
-            </div>`).join('') || `<p class="col-span-2 text-center py-5 opacity-20 text-[8px]">لا يوجد باقات حالياً</p>`;
-    }
-
-    function showSingleSubDetails(idx) {
-        const p = uData.activePlansDetails[idx];
-        const expiryDate = new Date(p.ts + (60 * 24 * 60 * 60 * 1000));
-        
-        document.getElementById('modalContent').innerHTML = `
-            <div class="text-center">
-                <div class="w-16 h-16 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-gold/50">
-                    <span class="text-2xl">💎</span>
-                </div>
-                <h2 class="text-gold font-black text-lg mb-2">تفاصيل الباقة النشطة</h2>
-                <div class="space-y-3 text-right glass p-4 text-[10px]">
-                    <div class="flex justify-between border-b border-white/5 pb-2"><span>قيمة الاشتراك:</span><span class="text-white font-bold">$${p.amount}</span></div>
-                    <div class="flex justify-between border-b border-white/5 pb-2"><span>تاريخ الاشتراك:</span><span class="text-white">${p.date}</span></div>
-                    <div class="flex justify-between border-b border-white/5 pb-2"><span>وقت الاشتراك:</span><span class="text-white">${p.time}</span></div>
-                    <div class="flex justify-between border-b border-white/5 pb-2"><span>الربح اليومي:</span><span class="text-green-500 font-bold">+$${p.daily.toFixed(2)}</span></div>
-                    <div class="flex justify-between border-b border-white/5 pb-2"><span>مدة الاشتراك:</span><span class="text-blue-400">60 يوماً</span></div>
-                    <div class="flex justify-between pt-1"><span>تاريخ الانتهاء:</span><span class="text-red-400 font-bold">${expiryDate.toLocaleDateString('ar-EG')}</span></div>
-                </div>
-                <p class="text-[8px] text-gray-500 mt-4 italic">توزع الأرباح تلقائياً كل 24 ساعة من وقت الاشتراك.</p>
-            </div>`;
-        document.getElementById('modal').classList.remove('hidden');
-    }
-
-    // --- المحفظة والعمليات ---
-    function openFinModal(type) {
-        const isD = type === 'deposit';
-        let options = isD ? `
-            <option value="Asiacell">آسياسيل (كارت 16 رقم)</option>
-            <option value="USDT">USDT (TRC-20)</option>` : `
-            <option value="ZainCash">زين كاش</option>
-            <option value="MasterCard">ماستر كارد</option>
-            <option value="USDT">USDT (TRC-20)</option>
-            <option value="SuperKey">سوبركي</option>`;
-
-        document.getElementById('modalContent').innerHTML = `
-            <h2 class="text-gold font-black text-center mb-5">${isD?'طلب إيداع':'طلب سحب'}</h2>
-            <div class="space-y-3">
-                <div class="p-3 glass text-[9px] mb-2 border border-white/5">
-                    <p>المستخدم: <span class="text-gold">${uData.username}</span></p>
-                    <p>الرصيد: <span class="text-gold font-bold">$${uData.balance.toFixed(2)}</span></p>
-                    ${!isD ? '<p class="text-red-400 mt-1 font-bold text-[7px]">الحد الأدنى للسحب 25$ مع استقطاع 5%</p>' : ''}
-                </div>
-                <select id="fMethod" onchange="toggleFields()" class="w-full p-4 rounded-xl outline-none text-[10px]">
-                    <option value="">اختر طريقة العمل</option>
-                    ${options}
+            <div class="input-group no-label"><i class="fa fa-user"></i><input type="text" id="reg_user" placeholder="اسم المستخدم الجديد"></div>
+            <div class="input-group no-label"><i class="fa fa-envelope"></i><input type="email" id="reg_email" placeholder="البريد الإلكتروني"></div>
+            <div class="input-group no-label">
+                <i class="fa fa-globe"></i>
+                <select id="reg_country" style="padding-right: 35px;">
+                    <option value="+964">العراق (+964)</option>
+                    <option value="+966">السعودية (+966)</option>
+                    <option value="+971">الإمارات (+971)</option>
                 </select>
-                <div id="methodInfo" class="hidden p-3 bg-gold/10 rounded-xl border border-gold/20 text-[8px] text-center text-gold"></div>
-                <input type="number" id="fAmt" placeholder="أدخل المبلغ ($)" class="w-full p-4 rounded-xl outline-none text-[10px]" oninput="calcNet(${!isD})">
-                <p id="netLabel" class="text-[7px] text-gray-400 px-2 hidden"></p>
-                <input type="text" id="fAcc" placeholder="رقم الهاتف / المحفظة / الماستر" class="w-full p-4 rounded-xl outline-none text-[10px]">
-                <div onclick="document.getElementById('fFile').click()" class="border-2 border-dashed border-white/10 p-4 text-center cursor-pointer rounded-xl hover:border-gold/30 transition">
-                    <input type="file" id="fFile" class="hidden" onchange="previewImg(this, 'fPrev')">
-                    <img id="fPrev" class="hidden w-20 mx-auto rounded mb-2 border border-gold/20 shadow-lg">
-                    <p class="text-[8px] opacity-40">أرفق صورة ${isD?'الوصل':'الباركود للمحفظة'}</p>
-                </div>
-                <button onclick="submitFinancial('${type}')" class="w-full btn-gold p-4 rounded-xl text-[10px]">إرسال الطلب</button>
-            </div>`;
-        document.getElementById('modal').classList.remove('hidden');
-    }
+            </div>
+            <div class="input-group no-label"><i class="fa fa-phone"></i><input type="tel" id="reg_phone" placeholder="رقم الهاتف الخاص بك"></div>
+            <div class="input-group no-label"><i class="fa fa-lock"></i><input type="password" id="reg_pass" placeholder="الرمز السري"></div>
+            <div class="input-group no-label"><i class="fa fa-gift"></i><input type="text" id="reg_ref" placeholder="كود الإحالة (إجباري)"></div>
+            <div class="input-group">
+                <label><i class="fa fa-image"></i> تحميل الصورة الشخصية للحساب</label>
+                <input type="file" id="reg_avatar_file" accept="image/*" style="padding:5px;">
+            </div>
+            
+            <button class="btn" onclick="actionRegister()">إنشاء حساب جديد ومزامنة</button>
+            <button class="btn btn-secondary" onclick="toggleAuth(false)">لديك حساب مسبق؟ تسجيل الدخول</button>
+        </div>
 
-    function calcNet(isWithdraw) {
-        if(!isWithdraw) return;
-        const amt = parseFloat(document.getElementById('fAmt').value);
-        const lbl = document.getElementById('netLabel');
-        if(amt >= 25) {
-            const net = amt - (amt * 0.05);
-            lbl.innerText = `سيصلك صافي: $${net.toFixed(2)} بعد خصم رسوم 5%`;
-            lbl.classList.remove('hidden');
-        } else { lbl.classList.add('hidden'); }
-    }
+        <div id="login_box" class="auth-card" style="display:none;">
+            <i class="fa fa-shield-halved auth-img" style="font-size: 45px; color: var(--accent-purple);"></i>
+            <h2>MAKASIB</h2>
+            <h3>تسجيل الدخول والمزامنة</h3>
+            <div class="input-group no-label"><i class="fa fa-envelope"></i><input type="email" id="login_email" placeholder="البريد الإلكتروني"></div>
+            <div class="input-group no-label"><i class="fa fa-lock"></i><input type="password" id="login_pass" placeholder="الرمز السري"></div>
+            <button class="btn" onclick="actionLogin()">تسجيل الدخول الفوري</button>
+            <button class="btn btn-secondary" onclick="toggleAuth(true)">لا تملك حساب؟ إنشاء حساب جديد</button>
+        </div>
+    </div>
 
-    function toggleFields() {
-        const m = document.getElementById('fMethod').value;
-        const info = document.getElementById('methodInfo');
-        info.classList.add('hidden');
-        if(m === 'USDT') {
-            info.innerHTML = `قم بالتحويل للمحفظة التالية:<br><b class="text-[10px] select-all">${appUsdtWallet}</b>`;
-            info.classList.remove('hidden');
-        } else if(m === 'Asiacell') {
-            info.innerHTML = `يرجى كتابة الـ 16 رقم الخاص بالكارت بدقة.`;
-            info.classList.remove('hidden');
-        }
-    }
-
-    async function submitFinancial(type) {
-        const m = document.getElementById('fMethod').value;
-        const amt = parseFloat(document.getElementById('fAmt').value);
-        const acc = document.getElementById('fAcc').value;
-        if(!m || !amt || !acc || !fileData) return alert("أكمل البيانات");
+    <div id="main_app_view" style="display:none;">
         
-        if(type === 'withdraw') {
-            if(amt < 25) return alert("الحد الأدنى 25$");
-            if(amt > uData.balance) return alert("رصيدك غير كافٍ");
-            await db.ref('users/'+uKey).update({ balance: uData.balance - amt });
+        <div id="home_tab" class="app-container active">
+            <div class="top-bar">
+                <span style="font-weight:bold; color:var(--accent-blue);"><i class="fa fa-robot"></i> MAKASIB SYSTEM</span>
+                <div class="top-icons">
+                    <i class="fa fa-download" onclick="startAppDownloadProcess()"></i>
+                    <i class="fa fa-bell" onclick="openModal('notifications_modal')"><span id="noti_dot" style="position:absolute; top:0; right:0; width:6px; height:6px; background:red; border-radius:50%;"></span></i>
+                </div>
+            </div>
+
+            <div class="slider-box" id="slider_main_box">
+                <img id="slider_img" class="slider-bg-img" src="" alt="8K Industrial Image">
+                <div class="slider-content-overlay">
+                    <span class="slider-badge" id="slider_badge_lbl">العولمة والإنتاج</span>
+                    <div class="slider-desc" id="slider_text_lbl">جاري تحميل المشاهد بدقة 8K...</div>
+                </div>
+            </div>
+
+            <div class="user-main-card">
+                <span class="balance-title">رصيد الحساب المحفوظ (USDT)</span>
+                <div class="balance-value" id="user_balance">0.00 USDT</div>
+                
+                <div class="stats-grid">
+                    <div class="stat-box"><span>الربح اليومي</span><strong id="user_daily">0.00$</strong></div>
+                    <div class="stat-box"><span>أرباح الفريق</span><strong id="user_team_profit">0.00$</strong></div>
+                    <div class="stat-box" onclick="openModal('active_packages_modal')"><span>الباقات النشطة</span><strong id="user_pkgs_count">0 باقة</strong></div>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <button class="btn" onclick="openModal('deposit_modal')"><i class="fa fa-arrow-down-long"></i> إيداع رصيد</button>
+                <button class="btn" style="background:linear-gradient(90deg, #ff3366, var(--accent-purple));" onclick="openModal('withdraw_modal')"><i class="fa fa-arrow-up-long"></i> سحب الأرباح</button>
+            </div>
+
+            <button class="btn" style="background: linear-gradient(90deg, #ffaa00, #ff5500); margin-bottom: 15px;" onclick="openModal('vip_modal')">
+                <i class="fa fa-crown"></i> ميزات وترقيات الحساب ومستويات VIP
+            </button>
+
+            <div style="text-align:center; margin-bottom:15px;">
+                <p style="font-size:12px; color:var(--text-dim);">مؤقت دورة التعدين والتمويل الحسابي</p>
+                <div class="timer-cone-container">
+                    <div class="timer-cone-inner">
+                        <div class="timer-digits" id="countdown_display">24:00:00</div>
+                        <small style="font-size:9px; color:var(--accent-blue); margin-top:2px;" id="timer_status_label">جاهز للجمع</small>
+                    </div>
+                </div>
+                <button class="btn" id="claim_earnings_btn" style="width:auto; padding:6px 20px; font-size:11px;" onclick="triggerMiningDay()"><i class="fa fa-bolt"></i> تحديث واستلام العائد اليومي</button>
+            </div>
+
+            <div class="xp-container">
+                <div style="display:flex; justify-content:space-between; font-size:11px;">
+                    <span>مستوى تقدم تكرار الاشتراك (XP)</span>
+                    <span id="xp_percent_text">0%</span>
+                </div>
+                <div class="xp-bar-bg"><div class="xp-bar-fill" id="xp_bar_fill"></div></div>
+                <small style="font-size:10px; color:var(--text-dim);">مكافأة تصل إلى 50$ عند إكمال الشريط 100%.</small>
+            </div>
+
+            <div class="user-main-card" style="background: rgba(0,0,0,0.4);">
+                <h4 style="font-size:12px; color:var(--accent-blue); margin-bottom:6px;"><i class="fa fa-newspaper"></i> رادار الأخبار الاقتصادية والتمويلية اللحظي</h4>
+                <div id="economy_news_box" style="font-size:11px; height:55px; overflow:hidden; line-height:1.6;"></div>
+            </div>
+
+            <div class="user-main-card">
+                <h4 style="font-size:12px; margin-bottom:8px;"><i class="fa fa-chart-line"></i> أسواق المضاربة الحية والعملات العشرين الموسعة</h4>
+                <div class="crypto-grid" id="crypto_market_prices"></div>
+            </div>
+        </div>
+
+        <div id="invest_tab" class="app-container">
+            <h2>خطط وباقات الاستثمار والتمويل المطور</h2>
+            <p style="font-size:11px; color:var(--text-dim); margin-bottom:15px;">اختر أحد الباقات التالية لتشغيل رأس المال وضخ الأرباح للمحافظ الفورية:</p>
+            <div id="packages_list_wrapper"></div>
+        </div>
+
+        <div id="team_tab" class="app-container">
+            <h2>إدارة شؤون الفريق والمحالات</h2>
+            <div class="user-main-card">
+                <p>رمز الإحالة الخاص بك: <strong id="team_my_code" style="color:var(--accent-blue);">---</strong></p>
+                <button class="btn btn-secondary" onclick="copyReferralLink()"><i class="fa fa-copy"></i> نسخ الرابط والكود</button>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-box"><span>الفريق النشط</span><strong id="active_team_count">0</strong></div>
+                <div class="stat-box"><span>الفريق غير النشط</span><strong id="inactive_team_count">0</strong></div>
+                <div class="stat-box"><span>تراكمي التمويل</span><strong id="team_total_bonus">0.00$</strong></div>
+            </div>
+
+            <div class="user-main-card" style="margin-top:15px;">
+                <h4 style="font-size:12px; color:var(--accent-blue); margin-bottom:8px;"><i class="fa fa-users-viewfinder"></i> أعضاء فريقك المسجلين حالياً:</h4>
+                <div class="team-list-container" id="team_members_list_wrapper">
+                    <p style="font-size:11px; opacity:0.6; text-align:center;">جاري فحص وتحديث قائمة المشتركين الفورية...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="profile_tab" class="app-container">
+            <h2>الملف الشخصي الآمن</h2>
+            <div class="user-main-card" style="text-align:center;">
+                <img id="prof_avatar_display" src="" alt="Avatar" class="profile-avatar" style="display:none;">
+                <i id="prof_avatar_icon" class="fa fa-user-gear" style="font-size:35px; color:var(--accent-purple); margin-bottom:10px;"></i>
+                <h3 id="prof_name_display" style="color:#fff;">---</h3>
+                <p style="font-size:11px; color:var(--text-dim);" id="prof_phone_display">---</p>
+                <p style="font-size:11px; color:var(--text-dim);" id="prof_email_display">---</p>
+                
+                <div style="margin-top:15px; border-top:1px solid rgba(255,255,255,0.1); padding-top:10px; text-align:right; font-size:12px; line-height:1.8;">
+                    <div><i class="fa fa-gift" style="color:var(--accent-blue);"></i> رمز الإحالة الداخلي: <strong id="prof_ref_code" style="color:#fff;">---</strong></div>
+                    <div><i class="fa fa-cubes" style="color:var(--accent-purple);"></i> عدد الباقات الاستثمارية النشطة: <strong id="prof_active_pkgs" style="color:#00ffcc;">0 باقة</strong></div>
+                </div>
+            </div>
+
+            <button class="btn" style="background: linear-gradient(90deg, #ffaa00, #ff5500); margin-bottom:10px;" onclick="openModal('vip_modal')"><i class="fa fa-crown"></i> ترقية الحساب وميزات VIP</button>
+            <button class="btn btn-secondary" style="background:#cc2255;" onclick="logoutSession()"><i class="fa fa-sign-out-alt"></i> تسجيل خروج آمن</button>
+            <button class="btn" id="admin_gate_btn" style="display:none; margin-top:15px; background:#4b0082;" onclick="openAdminDashboard()"><i class="fa fa-user-shield"></i> لوحة الإدارة العليا والتحكم</button>
+        </div>
+
+        <nav class="bottom-navbar">
+            <div class="nav-link active" onclick="switchMainTab('home_tab', this)"><i class="fa fa-home"></i>الرئيسية</div>
+            <div class="nav-link" onclick="switchMainTab('invest_tab', this)"><i class="fa fa-chart-pie"></i>الاستثمار</div>
+            <div class="nav-link" onclick="switchMainTab('team_tab', this)"><i class="fa fa-users"></i>الفريق</div>
+            <div class="nav-link" onclick="switchMainTab('profile_tab', this)"><i class="fa fa-user-circle"></i>الملف الشخصي</div>
+        </nav>
+    </div>
+
+    <a class="floating-support-btn" href="https://t.me/Mer_oo1" target="_blank">
+        <i class="fab fa-telegram-plane"></i>
+    </a>
+
+    <div id="download_app_modal" class="modal">
+        <div class="modal-content" style="text-align: center; border-color: #00ffcc;">
+            <h3 id="download_title_text">تهيئة حزمة التطبيق المباشرة</h3>
+            <p style="font-size:11px; color:var(--text-dim); margin-top:5px;">يرجى الانتظار حتى تكتمل عملية الفحص وتأمين ملف الـ APK.</p>
+            
+            <div class="download-box">
+                <div class="progress-circle-bar" id="download_progress_circle">
+                    <div class="progress-circle-inner">
+                        <span id="download_percent_txt">0%</span>
+                        <span class="download-status-text" id="download_status_lbl">جاري الاتصال...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="install_btn_container" style="display: none; margin-top:10px; animation: pulseSupport 1.5s infinite;">
+                <a href="https://www.mediafire.com/file/wedoslvmvix2wnv/MAKASIB.apk/file" target="_blank" class="btn" style="background: linear-gradient(90deg, #00ffcc, #00aa66); box-shadow: 0 0 15px #00ffcc; font-size:13px; font-weight:bold; letter-spacing:0.5px;" onclick="closeModal('download_app_modal')">
+                    <i class="fa fa-circle-down"></i> تثبيت التطبيق المباشر الآن
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="deposit_modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('deposit_modal')">×</span>
+            <h3>بوابة شحن وإيداع الحساب السحابي</h3>
+            
+            <div class="input-group">
+                <label>الخطوة 1: اختيار طريقة الإيداع</label>
+                <select id="dep_method_select" onchange="updateDepositMethodDetails()">
+                    <option value="TRON TRC-20">TRON (TRC-20)</option>
+                    <option value="TRC20-USDT Binance">حساب بايننس TRC20-USDT</option>
+                    <option value="Asiacell">رصيد آسياسيل (كارت)</option>
+                    <option value="Zain Al-Atheer">رصيد زين أثير</option>
+                </select>
+            </div>
+
+            <div id="crypto_deposit_fields">
+                <div class="input-group">
+                    <label>الخطوة 2: عنوان محفظة الاستلام المقررة</label>
+                    <div style="display:flex; gap:5px;">
+                        <input type="text" id="dep_wallet_address_display" value="TKFgYD4vgVYY2y2CTZuqbuitEgLte7xKPo" readonly style="text-align:center; color:var(--accent-blue); font-weight:bold;">
+                        <button class="btn" style="width:auto; padding:0 10px;" onclick="copyDepositWallet()"><i class="fa fa-copy"></i></button>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>الخطوة 3: صورة إيصال التحويل الناجح</label>
+                    <input type="file" id="dep_receipt_file" accept="image/*" style="padding:5px;">
+                </div>
+            </div>
+
+            <div id="card_deposit_fields" style="display:none;">
+                <div class="input-group">
+                    <label>الخطوة 2: صورة الكارت المعبأ</label>
+                    <input type="file" id="dep_card_image" accept="image/*" style="padding:5px;">
+                </div>
+                <div class="input-group">
+                    <label>الخطوة 3: قيمة الكارت الفئة السعرية ($)</label>
+                    <select id="dep_card_value">
+                        <option value="15">كارت فئة 15 دولار</option>
+                        <option value="30">كارت فئة 30 دولار</option>
+                        <option value="50">كارت فئة 50 دولار</option>
+                        <option value="100">كارت فئة 100 دولار</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>الخطوة 4: كتابة رقم الكارت السري</label>
+                    <input type="text" id="dep_card_number" placeholder="اكتب الأرقام السرية هنا بدقة">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>القيمة الإجمالية المراد شحنها بالدولار ($)</label>
+                <input type="number" id="dep_amount" placeholder="الحد الأدنى الفوري 15$" value="15">
+                <input type="text" id="dep_vip_level_hidden" value="0" style="display:none;">
+            </div>
+
+            <button class="btn" onclick="submitDepositOrderWithReceipt()">تأكيد وإرسال طلب الإيداع</button>
+            <div id="user_dep_logs" style="margin-top:15px;"></div>
+        </div>
+    </div>
+
+    <div id="active_packages_modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('active_packages_modal')">×</span>
+            <h3>تفاصيل باقاتك الاستثمارية النشطة</h3>
+            <div id="active_pkgs_list" style="margin-top:15px;">لا توجد باقات نشطة حالياً.</div>
+        </div>
+    </div>
+
+    <div id="withdraw_modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('withdraw_modal')">×</span>
+            <h3>بوابة السحب الفوري الموثق</h3>
+            <div class="input-group no-label"><i class="fa fa-wallet"></i><input type="text" id="with_wallet" placeholder="عنوان محفظتك لاستلاف USDT"></div>
+            <div class="input-group no-label"><i class="fa fa-dollar-sign"></i><input type="number" id="with_amount" placeholder="قيمة السحب ($15 - $9999)"></div>
+            <div class="input-group no-label"><i class="fa fa-lock"></i><input type="password" id="with_pass" placeholder="اكتب كلمة سر الحساب للتأكيد"></div>
+            <button class="btn" style="background:linear-gradient(90deg, #ff3366, var(--accent-purple));" onclick="submitWithdrawalOrder()">طلب سحب الرصيد المباشر</button>
+            <div id="user_with_logs" style="margin-top:15px;"></div>
+        </div>
+    </div>
+
+    <div id="notifications_modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('notifications_modal')">×</span>
+            <h3>سجل التحركات السحابية وإشعارات السيرفر</h3>
+            <div id="noti_logs_wrapper" style="margin-top:10px; font-size:12px;">جاري تحميل سجل الأنشطة...</div>
+        </div>
+    </div>
+
+    <div id="vip_modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('vip_modal')">×</span>
+            <h3>بوابة ترقيات ومميزات الـ VIP للمشاريع</h3>
+            <div id="vip_tiers_container"></div>
+            <h4 style="font-size:12px; margin-top:15px; color:var(--accent-blue);">سجل استثمارات وحالات الـ VIP:</h4>
+            <div id="vip_user_logs" style="margin-top:8px;"></div>
+        </div>
+    </div>
+
+    <div id="admin_modal" class="modal">
+        <div class="modal-content" style="max-width:92%; width:92%;">
+            <span class="close-btn" onclick="closeModal('admin_modal')">×</span>
+            <h3>لوحة التحكم والتحليلات للأدمن</h3>
+            <br>
+            <h4>إدارة طلبات شحن وإيداع الـ VIP والخطط العادية الكروت</h4>
+            <div id="admin_deposits_list" style="max-height:160px; overflow-y:auto; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:5px;"></div>
+            <h4>إدارة طلبات سحب الأبرار المعلقة</h4>
+            <div id="admin_withdrawals_list" style="max-height:140px; overflow-y:auto; margin-bottom:15px; background:rgba(0,0,0,0.3); padding:5px;"></div>
+            <h4>قائمة المستخدمين وباقاتهم</h4>
+            <div id="admin_users_list" style="max-height:140px; overflow-y:auto; background:rgba(0,0,0,0.3); padding:5px;"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            databaseURL: "https://pubgmobile-2d861-default-rtdb.firebaseio.com",
+            projectId: "pubgmobile-2d861"
+        };
+        
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.database();
+
+        let currentUid = null;
+        let userData = null;
+        let miningIntervalId = null;
+
+        // مصفوفة الباقات المعدلة والمحدثة بالكامل بترتيب تصاعدي حسب قيمتها وتسميتها المميّزة
+        const investmentPackages = [
+            { id: 1, cost: 15, payout: 0.50, name: "الباقة النحاسية (15$)" },
+            { id: 2, cost: 30, payout: 1, name: "الباقة البرونزية (30$)" },
+            { id: 3, cost: 60, payout: 2, name: "الباقة الفضية (60$)" },
+            { id: 4, cost: 90, payout: 3, name: "الباقة الذهبية (90$)" },
+            { id: 5, cost: 180, payout: 6, name: "الباقة البلاتينية (180$)" },
+            { id: 6, cost: 360, payout: 12, name: "الباقة الياقوتية (360$)" },
+            { id: 7, cost: 720, payout: 24, name: "الباقة الزمردية (720$)" },
+            { id: 8, cost: 1440, payout: 48, name: "الباقة الألماسية (1440$)" },
+            { id: 9, cost: 1800, payout: 60, name: "باقة التاج الملكي (1800$)" },
+            { id: 10, cost: 2880, payout: 96, name: "باقة النخبة الفي آي بي (2880$)" },
+            { id: 11, cost: 3300, payout: 110, name: "باقة الإمبراطور الاستثمارية (3300$)" },
+            { id: 12, cost: 5760, payout: 192, name: "باقة القمة العالمية الأسطورية (5760$)" }
+        ];
+
+        const vipTiers = [
+            { level: 1, cost: 50, bonusPercent: 5, dailyGift: 1, name: "VIP 1", xpDaily: 10 },
+            { level: 2, cost: 125, bonusPercent: 7, dailyGift: 2, name: "VIP 2", xpDaily: 15 },
+            { level: 3, cost: 175, bonusPercent: 9, dailyGift: 4, name: "VIP 3", xpDaily: 20 },
+            { level: 4, cost: 250, bonusPercent: 10, dailyGift: 6, name: "VIP 4", xpDaily: 25 },
+            { level: 5, cost: 400, bonusPercent: 15, dailyGift: 10, name: "VIP 5", xpDaily: 40 }
+        ];
+
+        const real8kSliders = [
+            { img: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80", badge: "تشغيل الأيدي العاملة 8K", desc: "إشراف ومتابعة حية لتشغيل الكوادر والعمال المهنيين في ورش خطوط الإنتاج والسيولة المتكاملة." },
+            { img: "https://images.unsplash.com/photo-1581094288338-2314dddb7ece?auto=format&fit=crop&w=800&q=80", badge: "معامل ومصانع الكهرباء", desc: "تغطية وتمويل محطات توليد وصيانة شبكات الطاقة الكهربائية لضمان استمرارية العوائد السحابية للمنصة." },
+            { img: "https://images.unsplash.com/photo-1513828583835-c541714b5bb6?auto=format&fit=crop&w=800&q=80", badge: "منشآت ومصانع الغاز 8K", desc: "عقود مضاربة واستثمار فوري في مصانع تكرير وضخ الغاز الطبيعي لتعزيز نمو المشاريع الصغيرة أونلاين." },
+            { img: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=800&q=80", badge: "مشاريع البناء والإعمار", desc: "بناء وتجهيز البنى التحتية والمجمعات الحديثة المواكبة لحركة العولمة والذكاء الاصطناعي الاستثماري." }
+        ];
+
+        const economicNews = [
+            "🔴 عاجل: قفزة لأسعار الذهب الفوري بنسبة 4% بسبب زيادة الطلب على عقود الطاقة والمصانع الكبرى.",
+            "🔵 مؤشر ناسداك يحقق مستويات قياسية جديدة مدفوعاً بطلب عالي على خوارزميات التعدين الكمي.",
+            "🟢 الفيدرالي يلمح إلى استقرار أسعار الفائدة وتوجه مستثمري التجزئة لتعزيز المشاريع الصغيرة أونلاين.",
+            "🔴 صعود مفاجئ في حركة المحافظ السحابية المشفرة USDT لشبكات TRC20 تزامناً مع تداولات آسيا."
+        ];
+
+        const assetList = [
+            "USDT / TRC20", "Bitcoin (BTC)", "Ethereum (ETH)", "Solana (SOL)", "Binance Coin (BNB)", 
+            "Ripple (XRP)", "Cardano (ADA)", "Avalanche (AVAX)", "Polkadot (DOT)", "TRON (TRX)",
+            "عملة الذهب الفوري", "عقود الفضة الحية", "عقود الناسداك 100", "البرنت الخام النفطي", "عقود الغاز الطبيعي", 
+            "الين الياباني الحركي", "اليورو / دولار", "الباوند الإنجليزي", "داو جونز الصناعي", "النحاس المطور AI"
+        ];
+
+        window.onload = function() {
+            init8kSliders();
+            initCryptoPrices();
+            initNewsTicker();
+            renderInvestmentPlans();
+            renderVipTiers();
+            checkAutoLoginSession();
+        };
+
+        function triggerVisualLoading(callback) {
+            const screen = document.getElementById('loading_screen');
+            screen.style.display = 'flex';
+            setTimeout(() => { screen.style.display = 'none'; if(callback) callback(); }, 700);
         }
 
-        const tid = 'TR' + Date.now();
-        await db.ref('transactions/' + tid).set({
-            id: tid, uid: uKey, uName: uData.username, amount: amt, type: type, 
-            status: 'قيد المراجعة', method: m, account: acc, proof: fileData, 
-            time: new Date().toLocaleString('ar-EG'), ts: Date.now()
-        });
-        alert("تم إرسال الطلب!"); closeModal();
-    }
+        function toggleAuth(showReg) {
+            document.getElementById('register_box').style.display = showReg ? 'block' : 'none';
+            document.getElementById('login_box').style.display = showReg ? 'none' : 'block';
+        }
 
-    function renderHistory() {
-        db.ref('transactions').orderByChild('uid').equalTo(uKey).on('value', snap => {
-            let h = ""; let list = []; snap.forEach(c => list.unshift(c.val()));
-            list.forEach(t => {
-                h += `
-                <div class="p-4 bg-white/5 rounded-2xl border-l-4 ${t.status==='مكتمل'?'border-green-500':'border-gold'} active:scale-95 transition" onclick="showTransDetails('${t.id}')">
-                    <div class="flex justify-between items-center text-[9px]">
-                        <span>${t.type==='deposit'?'📥 إيداع':'📤 سحب'}</span>
-                        <span class="font-bold text-gold">$${t.amount}</span>
-                        <span class="opacity-40">${t.status}</span>
-                    </div>
-                </div>`;
+        function switchMainTab(tabId, el) {
+            triggerVisualLoading(() => {
+                document.querySelectorAll('.app-container').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+                if(el) el.classList.add('active');
             });
-            document.getElementById('historyList').innerHTML = h || `<p class="text-center py-5 opacity-20">لا يوجد سجل</p>`;
-        });
-    }
+        }
 
-    function renderAgents() {
-        db.ref('agents').on('value', snap => {
-            let h = "";
-            snap.forEach(c => {
-                const a = c.val();
-                h += `<div class="glass p-3 flex gap-3 items-center border-r-2 border-gold"><img src="${a.img}" class="w-12 h-12 rounded-xl object-cover"><div class="flex-1"><h4 class="font-black text-[10px]">${a.n}</h4><p class="text-[8px] text-gold">${a.c}</p></div><div class="flex gap-1"><a href="${a.w}" class="text-green-500">WA</a></div></div>`;
-            });
-            document.getElementById('agentsGrid').innerHTML = h;
-        });
-    }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    function renderTeam() {
-        db.ref('users').once('value', snap => {
-            let h = "", profits = 0;
-            snap.forEach(c => {
-                const u = c.val();
-                if(u.referredBy === uData.myRefCode) {
-                    const active = (u.activePlansDetails && u.activePlansDetails.length > 0);
-                    if(active) profits += 5;
-                    h += `<div class="glass p-2 flex justify-between items-center text-[9px]"><p>${u.username}</p><span>${active?'نشط':'خامل'}</span></div>`;
+        function checkAutoLoginSession() {
+            const saved = localStorage.getItem('makasib_user_uid');
+            if(saved) { currentUid = saved; startRealtimeSync(); }
+        }
+
+        function actionRegister() {
+            const user = document.getElementById('reg_user').value.trim();
+            const email = document.getElementById('reg_email').value.trim();
+            const phone = document.getElementById('reg_country').value + document.getElementById('reg_phone').value.trim();
+            const pass = document.getElementById('reg_pass').value;
+            const ref = document.getElementById('reg_ref').value.trim();
+            const avatarFile = document.getElementById('reg_avatar_file').files[0];
+
+            if(!user || !email || !phone || !pass || !ref) { alert("❌ يرجى ملء كافة الخانات الأساسية!"); return; }
+
+            triggerVisualLoading(() => {
+                const proceedRegistration = (avatarBase64 = "") => {
+                    db.ref('MAKASIB/users').orderByChild('username').equalTo(user).once('value', snap => {
+                        if(snap.exists()) { alert("❌ اسم المستخدم مأخوذ مسبقاً!"); }
+                        else {
+                            const uid = 'usr_' + Date.now();
+                            const data = {
+                                uid: uid, username: user, email: email, phone: phone, password: pass, referrer: ref,
+                                myRefCode: 'MAK_REF_' + Math.floor(1000 + Math.random()*9000),
+                                balance: 0.00, dailyProfit: 0.00, teamProfit: 0.00, xp: 0,
+                                activePackageId: 0, activePackagesList: {}, isAdmin: (user.toLowerCase() === 'admin'),
+                                lastMiningTimestamp: 0, avatar: avatarBase64
+                            };
+                            db.ref('MAKASIB/users/' + uid).set(data).then(() => {
+                                localStorage.setItem('makasib_user_uid', uid);
+                                currentUid = uid;
+                                pushLogAction("إنشاء حساب جديد بنجاح ومزامنة الصورة الشخصية.");
+                                startRealtimeSync();
+                            });
+                        }
+                    });
+                };
+
+                if (avatarFile) {
+                    const reader = new FileReader();
+                    reader.onloadend = function() { proceedRegistration(reader.result); };
+                    reader.readAsDataURL(avatarFile);
+                } else {
+                    proceedRegistration("");
                 }
             });
-            document.getElementById('teamBon').innerText = `$${profits.toFixed(2)}`;
-            document.getElementById('teamGrid').innerHTML = h || `<p class="text-center py-5 opacity-20">لا يوجد فريق</p>`;
-        });
-    }
+        }
 
-    async function addNotif(title, body) { await db.ref('notifications').push({ uid: uKey, title, body, time: new Date().toLocaleTimeString('ar-EG'), read: false, ts: Date.now() }); }
+        function actionLogin() {
+            const email = document.getElementById('login_email').value.trim();
+            const pass = document.getElementById('login_pass').value;
+            if(!email || !pass) { alert("❌ يرجى ملء الحقول الأساسية!"); return; }
 
-    function renderNotifs() {
-        db.ref('notifications').orderByChild('uid').equalTo(uKey).on('value', snap => {
-            let h = "", unread = false;
-            let list = []; snap.forEach(c => { if(!c.val().read) unread = true; list.unshift(c.val()); });
-            document.getElementById('notifDot').style.display = unread ? 'block' : 'none';
-            list.forEach(n => { h += `<div class="glass p-3 border-l-2 border-gold mb-2"><p class="text-gold font-black text-[9px]">${n.title}</p><p class="text-[8px] opacity-70">${n.body}</p></div>`; });
-            document.getElementById('notifsList').innerHTML = h;
-        });
-    }
+            triggerVisualLoading(() => {
+                db.ref('MAKASIB/users').orderByChild('email').equalTo(email).once('value', snap => {
+                    if(snap.exists()) {
+                        let found = false;
+                        snap.forEach(c => {
+                            if(c.val().password === pass) {
+                                currentUid = c.key;
+                                localStorage.setItem('makasib_user_uid', currentUid);
+                                pushLogAction("تسجيل دخول ناجح واستعادة البيانات.");
+                                startRealtimeSync();
+                                found = true;
+                            }
+                        });
+                        if(!found) alert("❌ الرمز السري غير صحيح!");
+                    } else { alert("❌ البريد الإلكتروني غير مسجل مسبقاً!"); }
+                });
+            });
+        }
 
-    function showTab(id) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        document.querySelectorAll('.nav-it').forEach(b => { b.style.opacity = b.getAttribute('onclick').includes(id) ? "1" : "0.4"; });
-    }
+        function startRealtimeSync() {
+            document.getElementById('auth_view').style.display = 'none';
+            document.getElementById('main_app_view').style.display = 'block';
 
-    function startTimer() { setInterval(() => { if(!uData) return; const now = Date.now(), last = uData.lastProfitTime || now; const diff = Math.max(0, 86400000 - (now - last)); const h = Math.floor(diff/3600000).toString().padStart(2,'0'), m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0'), s = Math.floor((diff%60000)/1000).toString().padStart(2,'0'); document.getElementById('timer').innerText = `${h}:${m}:${s}`; }, 1000); }
+            db.ref('MAKASIB/users/' + currentUid).on('value', snap => {
+                if(!snap.exists()) return;
+                userData = snap.val();
 
-    function previewImg(inp, id) { if(inp.files[0]) { const r = new FileReader(); r.onload = e => { fileData = e.target.result; const im = document.getElementById(id); im.src = e.target.result; im.classList.remove('hidden'); }; r.readAsDataURL(inp.files[0]); } }
+                document.getElementById('user_balance').innerText = parseFloat(userData.balance).toFixed(2) + " USDT";
+                document.getElementById('user_daily').innerText = parseFloat(userData.dailyProfit).toFixed(2) + "$";
+                document.getElementById('user_team_profit').innerText = parseFloat(userData.teamProfit).toFixed(2) + "$";
+                document.getElementById('xp_percent_text').innerText = (userData.xp || 0) + "%";
+                document.getElementById('xp_bar_fill').style.width = (userData.xp || 0) + "%";
 
-    async function login() { const u = document.getElementById('logUser').value, p = document.getElementById('logPass').value; db.ref('users').once('value', snap => { let key = null; snap.forEach(c => { if((c.val().email===u || c.val().phone===u) && c.val().password===p) key = c.key; }); if(key) { localStorage.setItem('mk_user_key', key); location.reload(); } else alert("خطأ!"); }); }
+                // تحديث واجهة الملف الشخصي بالمعطيات الجديدة
+                document.getElementById('prof_name_display').innerText = userData.username;
+                document.getElementById('prof_phone_display').innerText = userData.phone;
+                document.getElementById('prof_email_display').innerText = userData.email;
+                document.getElementById('team_my_code').innerText = userData.myRefCode;
+                document.getElementById('prof_ref_code').innerText = userData.myRefCode;
 
-    async function register() { const n = document.getElementById('regName').value, e = document.getElementById('regEmail').value, ph = document.getElementById('regPhone').value, ps = document.getElementById('regPass').value, ref = document.getElementById('regRef').value; if(!n || !e || !ph || !ps || !fileData) return alert("أكمل البيانات"); const code = Math.floor(100000 + Math.random() * 900000).toString(); const res = db.ref('users').push(); await res.set({ username: n, email: e, phone: ph, password: ps, img: fileData, myRefCode: code, referredBy: ref, balance: 0, totalProfits: 0, activePlansDetails: [], lastProfitTime: Date.now() }); localStorage.setItem('mk_user_key', res.key); location.reload(); }
+                if (userData.avatar && userData.avatar !== "") {
+                    document.getElementById('prof_avatar_display').src = userData.avatar;
+                    document.getElementById('prof_avatar_display').style.display = 'inline-block';
+                    document.getElementById('prof_avatar_icon').style.display = 'none';
+                } else {
+                    document.getElementById('prof_avatar_display').style.display = 'none';
+                    document.getElementById('prof_avatar_icon').style.display = 'inline-block';
+                }
 
-    function toggleAuth(reg) { document.getElementById('loginForm').classList.toggle('hidden', reg); document.getElementById('registerForm').classList.toggle('hidden', !reg); }
-    function closeModal() { document.getElementById('modal').classList.add('hidden'); }
-    function logout() { localStorage.clear(); location.reload(); }
+                setupMiningCountdownLogic(userData.lastMiningTimestamp || 0);
 
-    window.onload = () => { init(); startTimer(); };
-</script>
+                let pkgsCount = 0;
+                let pkgsHtml = '';
+                if(userData.activePackagesList) {
+                    Object.keys(userData.activePackagesList).forEach(k => {
+                        pkgsCount++;
+                        let p = userData.activePackagesList[k];
+                        pkgsHtml += `<div class="log-box">📦 ${p.name} - تكلفة: $${p.cost} (العائد: +$${p.payout}/يوم)</div>`;
+                    });
+                    document.getElementById('active_pkgs_list').innerHTML = pkgsHtml;
+                } else {
+                    document.getElementById('active_pkgs_list').innerHTML = 'لا توجد باقات نشطة حالياً.';
+                }
+                document.getElementById('user_pkgs_count').innerText = pkgsCount + " باقة";
+                document.getElementById('prof_active_pkgs').innerText = pkgsCount + " باقة";
+
+                if(userData.isAdmin) { document.getElementById('admin_gate_btn').style.display = 'block'; }
+                
+                listenToTeamStructureLive();
+                loadPersonalTransactions();
+                loadVipUserLogs();
+            });
+
+            db.ref('MAKASIB/logs/' + currentUid).on('value', snap => {
+                const wrap = document.getElementById('noti_logs_wrapper'); wrap.innerHTML = '';
+                if(snap.exists()) {
+                    snap.forEach(c => {
+                        wrap.innerHTML += `<div class="log-box">🔔 [${new Date(c.val().time).toLocaleTimeString('ar-IQ')}] ${c.val().action}</div>`;
+                    });
+                    document.getElementById('noti_dot').style.display = 'block';
+                } else {
+                    wrap.innerHTML = 'سجل حركاتك فارغ حالياً.';
+                    document.getElementById('noti_dot').style.display = 'none';
+                }
+            });
+        }
+
+        function listenToTeamStructureLive() {
+            if (!userData || !userData.myRefCode) return;
+
+            db.ref('MAKASIB/users').orderByChild('referrer').equalTo(userData.myRefCode).on('value', snap => {
+                let active = 0, inactive = 0;
+                const listWrapper = document.getElementById('team_members_list_wrapper');
+                listWrapper.innerHTML = '';
+
+                if (snap.exists()) {
+                    snap.forEach(c => {
+                        let member = c.val();
+                        let isUserActive = (member.activePackageId > 0 || member.lastVipTimestamp > 0);
+                        
+                        if (isUserActive) active++; else inactive++;
+
+                        listWrapper.innerHTML += `
+                            <div class="team-member-item">
+                                <div>
+                                    <strong style="color: #fff; font-size:12px;">👤 ${member.username}</strong>
+                                    <div style="font-size: 10px; color: var(--text-dim); margin-top:2px;">📞 ${member.phone}</div>
+                                </div>
+                                <span style="font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold; ${isUserActive ? 'background:rgba(0,255,200,0.15); color:#00ffcc;' : 'background:rgba(255,50,100,0.15); color:#ff3366;'}">
+                                    ${isUserActive ? 'نشط (مستثمر)' : 'غير نشط'}
+                                </span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    listWrapper.innerHTML = `<p style="font-size:11px; opacity:0.5; text-align:center; padding:10px;">لم يقم أي مستخدم بالتسجيل عبر كود إحالتك حتى الآن.</p>`;
+                }
+
+                let totalEarned = active * 15.00;
+                document.getElementById('active_team_count').innerText = active;
+                document.getElementById('inactive_team_count').innerText = inactive;
+                document.getElementById('team_total_bonus').innerText = totalEarned.toFixed(2) + "$";
+            });
+        }
+
+        function startAppDownloadProcess() {
+            openModal('download_app_modal');
+            
+            document.getElementById('install_btn_container').style.display = 'none';
+            document.getElementById('download_title_text').innerText = "جاري تهيئة وتأمين ملف الحزمة...";
+            
+            let progress = 0;
+            const circle = document.getElementById('download_progress_circle');
+            const txt = document.getElementById('download_percent_txt');
+            const statusLbl = document.getElementById('download_status_lbl');
+            
+            const interval = setInterval(() => {
+                progress += 2; 
+                txt.innerText = progress + "%";
+                
+                let currentColor = '#ff3366'; 
+                if (progress < 40) {
+                    currentColor = '#ff3366'; 
+                    statusLbl.innerText = "جاري جلب الملف...";
+                } else if (progress >= 40 && progress < 80) {
+                    currentColor = '#ffaa00'; 
+                    statusLbl.innerText = "جاري فحص الأمان...";
+                    document.getElementById('download_title_text').innerText = "فحص الحزمة السحابية آلياً 🛡️";
+                } else {
+                    currentColor = '#00ffcc'; 
+                    statusLbl.innerText = "جاهز للتثبيت الفوري";
+                }
+                
+                circle.style.background = `conic-gradient(${currentColor} ${progress}%, #1a1e36 ${progress}%)`;
+                
+                if(progress >= 100) {
+                    clearInterval(interval);
+                    document.getElementById('download_title_text').innerText = "🎉 اكتمل تجهيز الحزمة بنجاح!";
+                    statusLbl.innerText = "اضغط لتثبيت الـ APK";
+                    document.getElementById('install_btn_container').style.display = 'block';
+                }
+            }, 80); 
+        }
+
+        function setupMiningCountdownLogic(lastTimestamp) {
+            if(miningIntervalId) clearInterval(miningIntervalId);
+            const btn = document.getElementById('claim_earnings_btn');
+            const display = document.getElementById('countdown_display');
+            const statusLbl = document.getElementById('timer_status_label');
+            const dayInMs = 24 * 60 * 60 * 1000;
+            
+            function updateTimer() {
+                const now = Date.now();
+                const timePassed = now - lastTimestamp;
+                const timeRemaining = dayInMs - timePassed;
+
+                if (timeRemaining > 0 && lastTimestamp > 0) {
+                    btn.style.display = 'none';
+                    btn.disabled = true;
+                    statusLbl.innerText = "جاري التعدين والتمويل...";
+                    statusLbl.style.color = "var(--accent-purple)";
+
+                    let totalSeconds = Math.floor(timeRemaining / 1000);
+                    let hours = Math.floor(totalSeconds / 3600);
+                    let minutes = Math.floor((totalSeconds % 3600) / 60);
+                    let seconds = totalSeconds % 60;
+
+                    display.innerText = (hours < 10 ? "0" : "") + hours + ":" + (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+                } else {
+                    clearInterval(miningIntervalId);
+                    btn.style.display = 'inline-block';
+                    btn.disabled = false;
+                    display.innerText = "24:00:00";
+                    statusLbl.innerText = "جاهز للاستلام";
+                    statusLbl.style.color = "var(--accent-blue)";
+                }
+            }
+            updateTimer();
+            miningIntervalId = setInterval(updateTimer, 1000);
+        }
+
+        function triggerMiningDay() {
+            if(!userData || !userData.activePackageId || userData.activePackageId === 0) { 
+                alert("⚠️ يرجى شحن وتفعيل باقة استثمارية أولاً لبدء دورات الـ 24 ساعة وتوليد الأرباح!"); 
+                return; 
+            }
+            triggerVisualLoading(() => {
+                let totalPayout = 0;
+                if(userData.activePackagesList) {
+                    Object.keys(userData.activePackagesList).forEach(k => { totalPayout += parseFloat(userData.activePackagesList[k].payout); });
+                }
+                const newTimestamp = Date.now();
+                db.ref('MAKASIB/users/' + currentUid).transaction(user => {
+                    if(user) { 
+                        user.balance = (parseFloat(user.balance) || 0) + totalPayout; 
+                        user.dailyProfit = totalPayout;
+                        user.lastMiningTimestamp = newTimestamp;
+                    }
+                    return user;
+                }).then(() => {
+                    pushLogAction(`استلام العائد اليومي بقيمة $${totalPayout}.`);
+                    alert(`💰 تم تجميع عوائد باقاتك بنجاح: +$${totalPayout}.`);
+                });
+            });
+        }
+
+        function pushLogAction(text) {
+            if(!currentUid) return;
+            db.ref('MAKASIB/logs/' + currentUid).push({ action: text, time: Date.now() });
+        }
+
+        function init8kSliders() {
+            let idx = 0;
+            const setSlider = (i) => {
+                document.getElementById('slider_img').src = real8kSliders[i].img;
+                document.getElementById('slider_badge_lbl').innerText = real8kSliders[i].badge;
+                document.getElementById('slider_text_lbl').innerText = real8kSliders[i].desc;
+            };
+            setSlider(0);
+            setInterval(() => { idx = (idx + 1) % real8kSliders.length; setSlider(idx); }, 5000);
+        }
+
+        function updateDepositMethodDetails() {
+            const method = document.getElementById('dep_method_select').value;
+            const walletInput = document.getElementById('dep_wallet_address_display');
+            const cryptoFields = document.getElementById('crypto_deposit_fields');
+            const cardFields = document.getElementById('card_deposit_fields');
+
+            if (method === 'Asiacell' || method === 'Zain Al-Atheer') {
+                cryptoFields.style.display = 'none';
+                cardFields.style.display = 'block';
+            } else {
+                cryptoFields.style.display = 'block';
+                cardFields.style.display = 'none';
+                
+                if(method === 'TRON TRC-20') {
+                    walletInput.value = "TKFgYD4vgVYY2y2CTZuqbuitEgLte7xKPo";
+                } else if(method === 'TRC20-USDT Binance') {
+                    walletInput.value = "THgE56mjh7oi4A7mn2BwsPRPbrbx5geJdq";
+                }
+            }
+        }
+
+        function copyDepositWallet() {
+            const val = document.getElementById('dep_wallet_address_display').value;
+            navigator.clipboard.writeText(val).then(() => alert("🔗 تم نسخ عنوان محفظة الإيداع بنجاح!"));
+        }
+
+        function submitDepositOrderWithReceipt() {
+            const method = document.getElementById('dep_method_select').value;
+            const amount = parseFloat(document.getElementById('dep_amount').value);
+            const vipLevel = parseInt(document.getElementById('dep_vip_level_hidden').value) || 0;
+
+            // تحديث الحد الأدنى للإيداع ليكون 15 دولار
+            if(!amount || amount < 15) { alert("❌ الحد الأدنى لتقديم أي طلب إيداع مالي هو 15$"); return; }
+
+            triggerVisualLoading(() => {
+                const sendPayload = (fileData = "", extraInfo = {}) => {
+                    const key = db.ref('MAKASIB/deposits').push().key;
+                    const depositPayload = {
+                        id: key, uid: currentUid, username: userData.username, amount: amount,
+                        status: "قيد المراجعة الفورية", method: method, proof: fileData,
+                        extraData: extraInfo, type: vipLevel > 0 ? `VIP ${vipLevel}` : "شحن عادي", 
+                        vipLevel: vipLevel, time: Date.now()
+                    };
+
+                    db.ref('MAKASIB/deposits/' + key).set(depositPayload).then(() => {
+                        pushLogAction(`إرسال طلب إيداع عبر ${method} بقيمة ${amount} $.`);
+                        alert("📥 تم رفع تفاصيل إيداعك بنجاح! طلبك الآن تحت التدقيق الإداري السحابي.");
+                        closeModal('deposit_modal');
+                    });
+                };
+
+                if (method === 'Asiacell' || method === 'Zain Al-Atheer') {
+                    const cardImg = document.getElementById('dep_card_image').files[0];
+                    const cardNum = document.getElementById('dep_card_number').value.trim();
+                    const cardVal = document.getElementById('dep_card_value').value;
+
+                    if(!cardNum) { alert("❌ يرجى كتابة رقم الكارت السري!"); return; }
+                    
+                    if (cardImg) {
+                        const reader = new FileReader();
+                        reader.onloadend = function() {
+                            sendPayload(reader.result, { cardNo: cardNum, cardSelectedValue: cardVal });
+                        };
+                        reader.readAsDataURL(cardImg);
+                    } else {
+                        sendPayload("", { cardNo: cardNum, cardSelectedValue: cardVal });
+                    }
+                } else {
+                    const receiptFile = document.getElementById('dep_receipt_file').files[0];
+                    if(!receiptFile) { alert("❌ يرجى اختيار وإرفاق صورة إيصال التحويل للمحفظة!"); return; }
+
+                    const reader = new FileReader();
+                    reader.onloadend = function() { sendPayload(reader.result, {}); };
+                    reader.readAsDataURL(receiptFile);
+                }
+            });
+        }
+
+        function renderVipTiers() {
+            const box = document.getElementById('vip_tiers_container'); box.innerHTML = '';
+            vipTiers.forEach(v => {
+                box.innerHTML += `
+                    <div class="user-main-card" style="background: linear-gradient(135deg, #2c2112 0%, #15112c 100%); border: 1px solid #ffaa00;">
+                        <h4 style="color:#ffaa00;"><i class="fa fa-crown"></i> تفاصيل باقة ${v.name}</h4>
+                        <div style="font-size:11px; margin-top:4px; line-height:1.7;">
+                            • قيمة تفعيل الاشتراك: <span style="color:var(--accent-blue); font-weight:bold;">${v.cost} USDT</span><br>
+                            • الراتب الهدية المباشر: <span style="color:#00ffcc;">$${v.dailyGift} يومياً</span> يتم ضخه للحساب<br>
+                            • نقاط الخبرة التراكمية: <span style="color:#ffaa00; font-weight:bold;">+${v.xpDaily} XP يومياً</span><br>
+                            • مؤقت التشغيل الإجمالي: <span style="color:var(--text-dim);">10 أيام متتالية</span>
+                        </div>
+                        <button class="btn" style="background:linear-gradient(90deg, #ffaa00, #9d4edd); margin-top:10px; padding:5px; font-size:11px;" onclick="triggerVipActivationFlow(${v.level}, ${v.cost})">تفعيل والاشتراك في ${v.name} الآن</button>
+                    </div>
+                `;
+            });
+        }
+
+        function triggerVipActivationFlow(level, cost) {
+            closeModal('vip_modal');
+            openModal('deposit_modal');
+            document.getElementById('dep_method_select').value = "TRON TRC-20";
+            updateDepositMethodDetails();
+            document.getElementById('dep_amount').value = cost;
+            document.getElementById('dep_vip_level_hidden').value = level;
+        }
+
+        function loadVipUserLogs() {
+            db.ref('MAKASIB/vip_investments').orderByChild('uid').equalTo(currentUid).on('value', snap => {
+                const box = document.getElementById('vip_user_logs'); box.innerHTML = '';
+                if(snap.exists()) {
+                    snap.forEach(c => {
+                        let v = c.val();
+                        box.innerHTML += `
+                            <div class="log-box" style="border-right: 3px solid #ffaa00; line-height:1.8;">
+                                🎯 <strong>مستوى VIP ${v.vipLevel} المشترك به</strong><br>
+                                • حالة الخطة: <span style="color:#00ffcc;">${v.status}</span><br>
+                                • أيام التشغيل المكتملة: ${v.daysCompleted} من أصل 10 أيام
+                            </div>`;
+                    });
+                } else {
+                    box.innerHTML = '<p style="font-size:11px; opacity:0.5;">لا توجد خطط واستثمارات VIP مفعلة ومقيدة حالياً.</p>';
+                }
+            });
+        }
+
+        function buyRegularPlan(id, cost) {
+            if(!userData) return;
+            if(userData.balance < cost) { alert("❌ رصيدك الحالي غير كافٍ!"); return; }
+            triggerVisualLoading(() => {
+                db.ref('MAKASIB/users/' + currentUid).transaction(user => {
+                    if(user) {
+                        user.balance = parseFloat(user.balance) - cost;
+                        if(!user.activePackagesList) user.activePackagesList = {};
+                        let itemKey = 'pkg_' + Date.now();
+                        let target = investmentPackages.find(p => p.id === id);
+                        user.activePackagesList[itemKey] = { id: id, cost: cost, payout: target.payout, name: target.name, timestamp: Date.now() };
+                        user.xp = (parseInt(user.xp) || 0) + 15;
+                        if(user.xp >= 100) { user.xp = 0; user.balance = parseFloat(user.balance) + 50; }
+                        user.activePackageId = id;
+                    }
+                    return user;
+                }).then(() => {
+                    pushLogAction(`شراء باقة عادية بقيمة ${cost} USDT.`);
+                    alert("✅ تم الاشتراك وتنشيط خطتك الاستثمارية العادية بنجاح!");
+                });
+            });
+        }
+
+        function submitWithdrawalOrder() {
+            const wallet = document.getElementById('with_wallet').value.trim();
+            const amount = parseFloat(document.getElementById('with_amount').value);
+            const pass = document.getElementById('with_pass').value;
+
+            if(!wallet || !amount || !pass) { alert("❌ يرجى ملء كافة الخانات!"); return; }
+            if(pass !== userData.password) { alert("❌ تأكيد الرمز السري خاطئ!"); return; }
+            if(userData.balance < amount) { alert("❌ رصيدك الحالي غير كافٍ!"); return; }
+
+            triggerVisualLoading(() => {
+                db.ref('MAKASIB/users/' + currentUid).transaction(user => { if(user) { user.balance = parseFloat(user.balance) - amount; } return user; }).then(() => {
+                    const key = db.ref('MAKASIB/withdrawals').push().key;
+                    db.ref('MAKASIB/withdrawals/' + key).set({ id: key, uid: currentUid, username: userData.username, amount: amount, wallet: wallet, status: "قيد المراجعة السحابية", time: Date.now() })
+                    .then(() => {
+                        pushLogAction(`طلب سحب رصيد بقيمة ${amount} USDT.`);
+                        alert("✅ تم رفع طلب السحب بنجاح.");
+                        closeModal('withdraw_modal');
+                    });
+                });
+            });
+        }
+
+        function loadPersonalTransactions() {
+            db.ref('MAKASIB/deposits').orderByChild('uid').equalTo(currentUid).on('value', snap => {
+                const div = document.getElementById('user_dep_logs'); div.innerHTML = '<h4>سجل طلبات الإيداع والـ VIP الحالية:</h4>';
+                if(snap.exists()) {
+                    snap.forEach(c => {
+                        div.innerHTML += `<div class="log-box">طلب ${c.val().type}: $${c.val().amount} | <span style="color:#ffaa00;">${c.val().status}</span></div>`;
+                    });
+                }
+            });
+            db.ref('MAKASIB/withdrawals').orderByChild('uid').equalTo(currentUid).on('value', snap => {
+                const div = document.getElementById('user_with_logs'); div.innerHTML = '<h4>سجل السحوبات:</h4>';
+                if(snap.exists()) {
+                    snap.forEach(c => { div.innerHTML += `<div class="log-box">سحب: $${c.val().amount} | <span style="color:#ff3366;">${c.val().status}</span></div>`; });
+                }
+            });
+        }
+
+        function copyReferralLink() {
+            navigator.clipboard.writeText(`سجل في منصة مكاسب وابدأ تشغيل واستثمار أموالك، كود إحالتي هو: ${userData.myRefCode}`)
+            .then(() => alert("🔗 تم نسخ رابط وكود دعوة فريقك بنجاح!"));
+        }
+
+        function initCryptoPrices() {
+            const grid = document.getElementById('crypto_market_prices'); grid.innerHTML = '';
+            assetList.forEach(asset => { 
+                grid.innerHTML += `<div class="crypto-item"><span>${asset}</span><span id="price_${asset.replace(/[^a-zA-Z0-9]/g, '')}" style="color:#00ffcc; font-weight:bold;">$${Math.floor(30 + Math.random()*2500)}</span></div>`; 
+            });
+            setInterval(() => {
+                assetList.forEach(asset => {
+                    const el = document.getElementById(`price_${asset.replace(/[^a-zA-Z0-9]/g, '')}`);
+                    if(el) {
+                        let currentVal = parseFloat(el.innerText.replace('$', '').replace(/,/g, ''));
+                        let change = (Math.random() * 4 - 2).toFixed(2);
+                        let newVal = (currentVal + parseFloat(change));
+                        if(newVal < 1) newVal = 10;
+                        el.innerText = `$${newVal.toFixed(2)}`;
+                        el.style.color = change >= 0 ? '#00ffcc' : '#ff3366';
+                    }
+                });
+            }, 3000);
+        }
+
+        function initNewsTicker() {
+            const box = document.getElementById('economy_news_box'); let idx = 0; box.innerText = economicNews[0];
+            setInterval(() => { idx = (idx + 1) % economicNews.length; box.innerText = economicNews[idx]; }, 5000);
+        }
+
+        function renderInvestmentPlans() {
+            const wrapper = document.getElementById('packages_list_wrapper'); wrapper.innerHTML = '';
+            investmentPackages.forEach(p => {
+                wrapper.innerHTML += `
+                    <div class="user-main-card" style="border-right: 4px solid var(--accent-purple);">
+                        <h4>${p.name}</h4>
+                        <p style="font-size:12px; margin:4px 0; color:var(--accent-blue);">تكلفة التنشيط: ${p.cost} USDT</p>
+                        <p style="font-size:11px; color:var(--text-dim);">العائد اليومي: +$${p.payout}</p>
+                        <button class="btn" style="margin-top:8px; padding:5px;" onclick="buyRegularPlan(${p.id}, ${p.cost})">شحن وتفعيل الحزمة</button>
+                    </div>
+                `;
+            });
+        }
+
+        function logoutSession() { localStorage.removeItem('makasib_user_uid'); location.reload(); }
+
+        function openAdminDashboard() { openModal('admin_modal'); loadAdminMasterData(); }
+        function loadAdminMasterData() {
+            db.ref('MAKASIB/deposits').on('value', snap => {
+                const div = document.getElementById('admin_deposits_list'); div.innerHTML = '';
+                if(snap.exists()) {
+                    snap.forEach(c => {
+                        let d = c.val();
+                        let receiptBtn = d.proof ? `<button class="btn" style="width:auto; padding:2px 5px; font-size:10px; background:#555;" onclick="window.open('${d.proof}')">عرض المرفق 🖼️</button>` : '';
+                        let actBtn = d.status.includes('المراجعة') ? 
+                            `<button class="btn" style="width:auto; padding:2px 6px; font-size:10px; display:inline-block;" onclick="approveDepositMaster('${d.id}', '${d.uid}', ${d.amount}, '${d.type}', ${d.vipLevel || 0})">موافقة وتفعيل فوري</button>` : `تم القبول`;
+                        
+                        let extraDetails = d.extraData ? ` | كود الكارت: ${d.extraData.cardNo || 'لا يوجد'}` : '';
+                        div.innerHTML += `<div style="font-size:11px; margin-bottom:6px; border-bottom:1px solid #222; padding-bottom:3px;">👤 ${d.username} | ${d.method} | مبلغ: $${d.amount}${extraDetails} | ${receiptBtn} -> ${actBtn}</div>`;
+                    });
+                } else { div.innerHTML = 'لا توجد طلبات معلقة.'; }
+            });
+
+            db.ref('MAKASIB/withdrawals').on('value', snap => {
+                const div = document.getElementById('admin_withdrawals_list'); div.innerHTML = '';
+                if(snap.exists()) {
+                    snap.forEach(c => {
+                        let w = c.val();
+                        let btn = w.status.includes('المراجعة') ? `<button class="btn" style="width:auto; padding:2px 6px; font-size:10px; background:red;" onclick="approveWithdrawalMaster('${w.id}')">إتمام ودفع السحب</button>` : `تم الدفع`;
+                        div.innerHTML += `<div style="font-size:11px; margin-bottom:5px;">👤 ${w.username} | $${w.amount} -> ${btn}</div>`;
+                    });
+                }
+            });
+
+            db.ref('MAKASIB/users').on('value', snap => {
+                const div = document.getElementById('admin_users_list'); div.innerHTML = '';
+                if(snap.exists()) { snap.forEach(c => { div.innerHTML += `<div style="font-size:11px;">👤 الاسم: ${c.val().username} | رصيد: $${parseFloat(c.val().balance).toFixed(2)} USDT</div>`; }); }
+            });
+        }
+
+        function approveDepositMaster(depId, uid, amount, type, vipLevel) {
+            triggerVisualLoading(() => {
+                if(type.includes('VIP')) {
+                    const vipKey = 'vip_active_' + Date.now();
+                    db.ref('MAKASIB/vip_investments/' + vipKey).set({ id: vipKey, uid: uid, vipLevel: vipLevel, cost: amount, daysCompleted: 0, status: "نشط ومقيد التسييل", timestamp: Date.now() });
+                    db.ref('MAKASIB/users/' + uid).update({ activePackageId: 999, lastVipTimestamp: Date.now() });
+                } else {
+                    db.ref('MAKASIB/users/' + uid).transaction(user => { if(user) { user.balance = (parseFloat(user.balance) || 0) + amount; } return user; });
+                }
+                db.ref('MAKASIB/deposits/' + depId).update({ status: "✅ تمت الموافقة" }).then(() => { alert("🎉 تم اعتماد الدفع وضخ الرصيد للحساب بنجاح."); loadAdminMasterData(); });
+            });
+        }
+
+        function approveWithdrawalMaster(witId) {
+            triggerVisualLoading(() => {
+                db.ref('MAKASIB/withdrawals/' + witId).update({ status: "✅ تمت معالجة السحب بنجاح" }).then(() => { alert("✅ تم إتمام السحب."); loadAdminMasterData(); });
+            });
+        }
+    </script>
 </body>
 </html>
